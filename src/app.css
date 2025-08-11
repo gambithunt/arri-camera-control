@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+    /* Enable smooth scrolling */
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-arri-dark text-white;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+  }
+  
+  /* Improve touch scrolling on iOS */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Set CSS custom properties for safe areas */
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+  }
+}
+
+@layer components {
+  /* Button Components */
+  .btn-primary {
+    @apply bg-arri-red hover:bg-red-600 text-white font-medium py-2 px-4 rounded min-h-touch min-w-touch transition-colors;
+    @apply active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-arri-red focus:ring-opacity-50;
+  }
+  
+  .btn-secondary {
+    @apply bg-arri-gray hover:bg-gray-600 text-white font-medium py-2 px-4 rounded min-h-touch min-w-touch transition-colors;
+    @apply active:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent hover:bg-arri-gray text-white font-medium py-2 px-4 rounded min-h-touch min-w-touch transition-colors;
+    @apply active:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50;
+  }
+  
+  /* Panel Components */
+  .control-panel {
+    @apply bg-arri-gray rounded-lg p-4 shadow-lg;
+    @apply tablet:p-6;
+  }
+  
+  .control-panel-compact {
+    @apply bg-arri-gray rounded-lg p-3 shadow-lg;
+    @apply tablet:p-4;
+  }
+  
+  /* Touch and Interaction */
+  .touch-target {
+    @apply min-h-touch min-w-touch;
+  }
+  
+  .touch-area {
+    @apply min-h-touch min-w-touch flex items-center justify-center;
+  }
+  
+  /* Responsive Text */
+  .text-responsive-xs {
+    @apply text-xs tablet:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm tablet:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-sm tablet:text-base;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base tablet:text-lg;
+  }
+  
+  .text-responsive-xl {
+    @apply text-lg tablet:text-xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-xl tablet:text-2xl;
+  }
+  
+  /* Responsive Spacing */
+  .spacing-responsive-sm {
+    @apply p-2 tablet:p-3;
+  }
+  
+  .spacing-responsive-md {
+    @apply p-3 tablet:p-4;
+  }
+  
+  .spacing-responsive-lg {
+    @apply p-4 tablet:p-6;
+  }
+  
+  /* Layout Utilities */
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .safe-area-x {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .safe-area-y {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  /* Animation Classes */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  /* Disable animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-slide-down,
+    .animate-scale-in {
+      animation: none;
+    }
+  }
+}
+
+@layer utilities {
+  /* Responsive Grid Utilities */
+  .grid-responsive {
+    @apply grid grid-cols-1 tablet:grid-cols-2 gap-4;
+  }
+  
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 tablet:grid-cols-3 gap-4;
+  }
+  
+  /* Flex Utilities */
+  .flex-responsive {
+    @apply flex flex-col tablet:flex-row gap-4;
+  }
+  
+  /* Visibility Utilities */
+  .hidden-phone {
+    @apply hidden tablet:block;
+  }
+  
+  .hidden-tablet {
+    @apply block tablet:hidden;
+  }
+  
+  .show-landscape {
+    @apply hidden phone-landscape:block tablet-landscape:block;
+  }
+  
+  .hide-landscape {
+    @apply block phone-landscape:hidden tablet-landscape:hidden;
+  }
+  
+  /* Touch-specific utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+  
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+  
+  .touch-none {
+    touch-action: none;
+  }
+}

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Display Name -->
+    <key>CFBundleDisplayName</key>
+    <string>ARRI Camera Control</string>
+    
+    <!-- App Description -->
+    <key>CFBundleDescription</key>
+    <string>Professional ARRI camera control via CAP protocol</string>
+    
+    <!-- Supported Device Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    
+    <!-- iPad Specific Orientations -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    </array>
+    
+    <!-- Network Usage Description -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>This app needs access to your local network to communicate with ARRI cameras via the CAP protocol.</string>
+    
+    <!-- Bonjour Services -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_cap._tcp</string>
+        <string>_arri-camera._tcp</string>
+    </array>
+    
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>background-processing</string>
+        <string>background-fetch</string>
+    </array>
+    
+    <!-- File Sharing -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    
+    <!-- Document Types -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>LUT File</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
+    
+    <!-- Prevent App Store Connect from requiring camera permission -->
+    <key>NSCameraUsageDescription</key>
+    <string>This app does not use the device camera. It controls external ARRI cameras.</string>
+    
+    <!-- Status Bar Style -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+    
+    <!-- Launch Screen -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    
+    <!-- Requires Full Screen -->
+    <key>UIRequiresFullScreen</key>
+    <false/>
+    
+    <!-- Multitasking Support -->
+    <key>UIRequiresPersistentWiFi</key>
+    <true/>
+    
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+</dict>
+</plist>
