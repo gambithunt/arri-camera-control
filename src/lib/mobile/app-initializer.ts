@@ -173,10 +173,7 @@ export class MobileAppInitializer {
     try {
       console.log('Initializing offline storage system...');
       
-      const storageReady = await offlineStorage.initialize();
-      if (!storageReady) {
-        throw new Error('Offline storage initialization failed');
-      }
+      await offlineStorage.initialize();
 
       // Verify storage functionality
       await this.verifyStorageFunctionality();
@@ -195,10 +192,10 @@ export class MobileAppInitializer {
       const testKey = 'init-test';
       const testValue = { timestamp: Date.now(), test: true };
       
-      await offlineStorage.set(testKey, testValue);
-      const retrieved = await offlineStorage.get(testKey);
+      await offlineStorage.store('test', testKey, testValue);
+      const retrieved = await offlineStorage.retrieve(testKey);
       
-      if (!retrieved || retrieved.timestamp !== testValue.timestamp) {
+      if (!retrieved || retrieved.data.timestamp !== testValue.timestamp) {
         throw new Error('Storage verification failed');
       }
       
@@ -273,24 +270,15 @@ export class MobileAppInitializer {
 
   private async initializeBackend(): Promise<boolean> {
     try {
-      console.log('Initializing embedded backend server...');
+      console.log('Initializing offline-first backend server...');
 
-      // Initialize the backend launcher
-      const backendReady = await mobileBackend.initialize();
-      if (!backendReady) {
-        throw new Error('Backend launcher initialization failed');
-      }
-
-      // Wait for server to be fully ready
-      const serverReady = await mobileBackend.waitForServer(15000);
-      if (!serverReady) {
-        throw new Error('Backend server startup timeout');
-      }
+      // Start the startup manager which handles all backend initialization
+      await startupManager.start();
 
       // Verify backend functionality
       await this.verifyBackendFunctionality();
 
-      console.log('Backend server initialized successfully at:', mobileBackend.getServerUrl());
+      console.log('Backend server initialized successfully at:', startupManager.getServerURL());
       return true;
     } catch (error) {
       console.error('Backend initialization failed:', error);
@@ -300,22 +288,24 @@ export class MobileAppInitializer {
 
   private async verifyBackendFunctionality(): Promise<void> {
     try {
-      // Test basic backend API
-      if (Capacitor.isNativePlatform() && (window as any).localAPI) {
-        const response = await (window as any).localAPI.storage.get({ key: 'backend-test' });
-        if (response && response.success !== undefined) {
-          console.log('Backend API functionality verified');
-        } else {
-          throw new Error('Backend API response invalid');
-        }
-      } else {
-        // For web platforms, test HTTP endpoint
-        const response = await fetch(`${mobileBackend.getServerUrl()}/health`);
-        if (!response.ok) {
-          throw new Error(`Backend health check failed: ${response.status}`);
-        }
-        console.log('Backend HTTP functionality verified');
+      // Test basic backend API through startup manager
+      const serverStatus = startupManager.getStatus();
+      if (!serverStatus.phase === 'ready') {
+        throw new Error('Backend server not ready');
       }
+
+      // Test HTTP endpoint
+      const response = await fetch(`${startupManager.getServerURL()}/health`);
+      if (!response.ok) {
+        throw new Error(`Backend health check failed: ${response.status}`);
+      }
+      
+      const healthData = await response.json();
+      if (healthData.status !== 'ok') {
+        throw new Error('Backend health check returned non-ok status');
+      }
+      
+      console.log('Backend HTTP functionality verified');
     } catch (error) {
       console.error('Backend verification failed:', error);
       throw error;
@@ -326,10 +316,8 @@ export class MobileAppInitializer {
     try {
       console.log('Initializing connection manager...');
 
-      const connectionReady = await connectionManager.initialize();
-      if (!connectionReady) {
-        throw new Error('Connection manager initialization failed');
-      }
+      // Connect to the local backend
+      await connectionManager.connect();
 
       // Set up connection event listeners
       this.setupConnectionEventListeners();
@@ -343,19 +331,19 @@ export class MobileAppInitializer {
   }
 
   private setupConnectionEventListeners(): void {
-    connectionManager.on('connection:established', (data) => {
+    connectionManager.on('connected', (data: any) => {
       console.log('Connection established:', data);
       this.emit('app:connection-established', data);
     });
 
-    connectionManager.on('connection:lost', (data) => {
+    connectionManager.on('disconnected', (data: any) => {
       console.warn('Connection lost:', data);
       this.emit('app:connection-lost', data);
     });
 
-    connectionManager.on('connection:restored', (data) => {
-      console.log('Connection restored:', data);
-      this.emit('app:connection-restored', data);
+    connectionManager.on('error', (data: any) => {
+      console.error('Connection error:', data);
+      this.emit('app:connection-error', data);
     });
   }
 
@@ -439,7 +427,7 @@ export class MobileAppInitializer {
   private async finalizeInitialization(): Promise<void> {
     try {
       // Store initialization metadata
-      await offlineStorage.set('app-initialization', {
+      await offlineStorage.store('app-metadata', 'initialization', {
         timestamp: new Date().toISOString(),
         platform: Capacitor.getPlatform(),
         version: '1.0.0',
@@ -493,7 +481,7 @@ export class MobileAppInitializer {
       };
 
       // Store in offline storage for later analysis
-      offlineStorage.set(`error-${Date.now()}`, errorData).catch(console.warn);
+      offlineStorage.store('error-log', `error-${Date.now()}`, errorData).catch(console.warn);
     } catch (storageError) {
       console.warn('Failed to store error data:', storageError);
     }
@@ -538,14 +526,14 @@ export class MobileAppInitializer {
     console.log('Cleaning up app initializer...');
     
     try {
-      // Clean up connection manager
+      // Disconnect from local backend
       if (this.status.connectionReady) {
-        await connectionManager.cleanup();
+        await connectionManager.disconnect();
       }
 
-      // Stop backend server
+      // Stop the startup manager and all services
       if (this.status.backendReady) {
-        await mobileBackend.cleanup();
+        await startupManager.stop();
       }
 
       // Clear event listeners
@@ -576,7 +564,7 @@ export class MobileAppInitializer {
   }
 
   getBackendUrl(): string {
-    return mobileBackend.getServerUrl();
+    return startupManager.getServerURL();
   }
 
   getInitializationTime(): number | undefined {

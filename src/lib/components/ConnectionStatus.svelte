@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { cameraApi } from '$lib/api/cameraApi';
-	import type { ConnectionStatus as SocketConnectionStatus } from '$lib/websocket/socketClient';
-	import type { CameraState } from '$lib/api/cameraApi';
+	// Mock types for UI testing
+	interface SocketConnectionStatus {
+		connected: boolean;
+		connecting: boolean;
+		error?: string;
+	}
+	
+	interface CameraState {
+		connected: boolean;
+		model?: string;
+		serialNumber?: string;
+	}
 	
 	export let showDetails: boolean = true;
 	
@@ -16,17 +25,20 @@
 	let unsubscribeCamera: () => void;
 	
 	onMount(() => {
-		// Subscribe to connection status
-		unsubscribeConnection = cameraApi.connectionStatus.subscribe((status) => {
-			connectionStatus = status;
-			updateDisplay();
-		});
+		// Mock data for UI testing - set to connected so you can test the UI
+		connectionStatus = {
+			connected: true,
+			connecting: false,
+			error: undefined
+		};
 		
-		// Subscribe to camera state
-		unsubscribeCamera = cameraApi.cameraState.subscribe((state) => {
-			cameraState = state;
-			updateDisplay();
-		});
+		cameraState = {
+			connected: true,
+			model: 'ARRI ALEXA Mini LF (Mock)',
+			serialNumber: 'ALF001234'
+		};
+		
+		updateDisplay();
 	});
 	
 	onDestroy(() => {
@@ -53,14 +65,22 @@
 	}
 	
 	async function handleConnect() {
-		try {
-			const result = await cameraApi.connect();
-			if (!result.success) {
-				console.error('Connection failed:', result.error);
-			}
-		} catch (error) {
-			console.error('Connection error:', error);
-		}
+		console.log('Connect button clicked - UI testing mode');
+		
+		// Mock connection attempt
+		connectionStatus = { ...connectionStatus, connecting: true };
+		updateDisplay();
+		
+		// Simulate connection delay
+		setTimeout(() => {
+			connectionStatus = {
+				connected: true,
+				connecting: false,
+				error: undefined
+			};
+			cameraState = { ...cameraState, connected: true };
+			updateDisplay();
+		}, 2000);
 	}
 </script>
 

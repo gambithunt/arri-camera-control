@@ -754,3 +754,20 @@ export function retryError(errorId: string): Promise<boolean> {
 export function resolveError(errorId: string): void {
   return errorManager.resolveError(errorId);
 }
+
+export function handleNetworkError(message: string, context?: ErrorContext): AppError {
+  return errorManager.createError('network', message, {
+    context,
+    severity: 'high',
+    retryable: true,
+    userMessage: 'Network error occurred. Check your internet connection.',
+    actionable: [
+      {
+        id: 'retry-network',
+        label: 'Retry',
+        type: 'retry',
+        primary: true
+      }
+    ]
+  });
+}

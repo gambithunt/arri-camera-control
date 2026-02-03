@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { cameraStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { cameraStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 	
 	// Props
 	export let displayMode: 'TC' | 'UB' | 'BOTH' = 'TC'; // Timecode, User Bits, or Both

@@ -1,673 +1,352 @@
+<!--
+  Professional Color Wheel Component
+  Interactive color wheel with draggable control point for RGB adjustment
+-->
 <script lang="ts">
-	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-	import { browser } from '$app/environment';
-	
-	// Props
-	export let wheelType: 'shadows' | 'midtones' | 'highlights' = 'shadows';
-	export let values = { r: 0, g: 0, b: 0 };
-	export let controlType: 'lift' | 'gamma' | 'gain' = 'lift';
-	export let disabled = false;
-	export let size = 200;
-	export let fullscreen = false;
-	export let showValues = true;
-	export let sensitivity = 1.0;
-	
-	// Event dispatcher
-	const dispatch = createEventDispatcher<{
-		change: { wheelType: string; controlType: string; values: { r: number; g: number; b: number } };
-		fullscreenToggle: { wheelType: string; controlType: string };
-		reset: { wheelType: string; controlType: string };
-	}>();
-	
-	// Component state
-	let canvas: HTMLCanvasElement;
-	let ctx: CanvasRenderingContext2D;
-	let isDragging = false;
-	let dragStartPos = { x: 0, y: 0 };
-	let currentPos = { x: 0, y: 0 };
-	let wheelCenter = { x: 0, y: 0 };
-	let wheelRadius = 0;
-	let animationFrame: number;
-	
-	// Touch/mouse tracking
-	let touchId: number | null = null;
-	let lastTouchTime = 0;
-	let tapCount = 0;
-	
-	// Color wheel configuration
-	const wheelConfig = {
-		shadows: { 
-			hueOffset: 0, 
-			saturationMultiplier: 0.8,
-			brightnessRange: [0.2, 0.8],
-			centerColor: '#404040'
-		},
-		midtones: { 
-			hueOffset: 0, 
-			saturationMultiplier: 1.0,
-			brightnessRange: [0.3, 0.9],
-			centerColor: '#808080'
-		},
-		highlights: { 
-			hueOffset: 0, 
-			saturationMultiplier: 0.9,
-			brightnessRange: [0.5, 1.0],
-			centerColor: '#C0C0C0'
-		}
-	};
-	
-	// Control type configuration
-	const controlConfig = {
-		lift: { 
-			range: [-1, 1], 
-			defaultValue: 0, 
-			label: 'Lift',
-			description: 'Adjusts shadows/blacks'
-		},
-		gamma: { 
-			range: [0.1, 3.0], 
-			defaultValue: 1, 
-			label: 'Gamma',
-			description: 'Adjusts midtones'
-		},
-		gain: { 
-			range: [0.1, 3.0], 
-			defaultValue: 1, 
-			label: 'Gain',
-			description: 'Adjusts highlights/whites'
-		}
-	};
-	
-	$: config = wheelConfig[wheelType];
-	$: controlInfo = controlConfig[controlType];
-	$: wheelSize = fullscreen ? Math.min(window?.innerWidth * 0.8, window?.innerHeight * 0.8, 400) : size;
-	$: wheelRadius = wheelSize / 2 - 20;
-	$: wheelCenter = { x: wheelSize / 2, y: wheelSize / 2 };
-	
-	onMount(() => {
-		if (browser && canvas) {
-			ctx = canvas.getContext('2d')!;
-			setupCanvas();
-			drawColorWheel();
-			updateIndicatorPosition();
-		}
-	});
-	
-	onDestroy(() => {
-		if (animationFrame) {
-			cancelAnimationFrame(animationFrame);
-		}
-	});
-	
-	function setupCanvas() {
-		if (!canvas || !ctx) return;
-		
-		// Set up high DPI canvas
-		const dpr = window.devicePixelRatio || 1;
-		const rect = canvas.getBoundingClientRect();
-		
-		canvas.width = wheelSize * dpr;
-		canvas.height = wheelSize * dpr;
-		canvas.style.width = wheelSize + 'px';
-		canvas.style.height = wheelSize + 'px';
-		
-		ctx.scale(dpr, dpr);
-		ctx.imageSmoothingEnabled = true;
-		ctx.imageSmoothingQuality = 'high';
-	}
-	
-	function drawColorWheel() {
-		if (!ctx) return;
-		
-		ctx.clearRect(0, 0, wheelSize, wheelSize);
-		
-		// Draw color wheel background
-		drawWheelBackground();
-		
-		// Draw wheel border
-		drawWheelBorder();
-		
-		// Draw current position indicator
-		drawPositionIndicator();
-		
-		// Draw center point
-		drawCenterPoint();
-	}
-	
-	function drawWheelBackground() {
-		const centerX = wheelCenter.x;
-		const centerY = wheelCenter.y;
-		
-		// Create radial gradient for the wheel
-		const imageData = ctx.createImageData(wheelSize, wheelSize);
-		const data = imageData.data;
-		
-		for (let y = 0; y < wheelSize; y++) {
-			for (let x = 0; x < wheelSize; x++) {
-				const dx = x - centerX;
-				const dy = y - centerY;
-				const distance = Math.sqrt(dx * dx + dy * dy);
-				
-				if (distance <= wheelRadius) {
-					// Calculate hue and saturation from position
-					const angle = Math.atan2(dy, dx);
-					const hue = ((angle + Math.PI) / (2 * Math.PI) + config.hueOffset) % 1;
-					const saturation = (distance / wheelRadius) * config.saturationMultiplier;
-					const brightness = config.brightnessRange[0] + 
-						(config.brightnessRange[1] - config.brightnessRange[0]) * (1 - distance / wheelRadius);
-					
-					const rgb = hsvToRgb(hue, saturation, brightness);
-					const index = (y * wheelSize + x) * 4;
-					
-					data[index] = rgb.r;     // Red
-					data[index + 1] = rgb.g; // Green
-					data[index + 2] = rgb.b; // Blue
-					data[index + 3] = 255;   // Alpha
-				} else {
-					// Transparent outside the wheel
-					const index = (y * wheelSize + x) * 4;
-					data[index + 3] = 0;
-				}
-			}
-		}
-		
-		ctx.putImageData(imageData, 0, 0);
-	}
-	
-	function drawWheelBorder() {
-		ctx.beginPath();
-		ctx.arc(wheelCenter.x, wheelCenter.y, wheelRadius, 0, 2 * Math.PI);
-		ctx.strokeStyle = '#666';
-		ctx.lineWidth = 2;
-		ctx.stroke();
-	}
-	
-	function drawPositionIndicator() {
-		const pos = valuesToPosition(values);
-		
-		// Draw indicator circle
-		ctx.beginPath();
-		ctx.arc(pos.x, pos.y, 8, 0, 2 * Math.PI);
-		ctx.fillStyle = 'white';
-		ctx.fill();
-		ctx.strokeStyle = '#333';
-		ctx.lineWidth = 2;
-		ctx.stroke();
-		
-		// Draw inner dot
-		ctx.beginPath();
-		ctx.arc(pos.x, pos.y, 3, 0, 2 * Math.PI);
-		ctx.fillStyle = '#333';
-		ctx.fill();
-	}
-	
-	function drawCenterPoint() {
-		ctx.beginPath();
-		ctx.arc(wheelCenter.x, wheelCenter.y, 4, 0, 2 * Math.PI);
-		ctx.fillStyle = config.centerColor;
-		ctx.fill();
-		ctx.strokeStyle = '#333';
-		ctx.lineWidth = 1;
-		ctx.stroke();
-	}
-	
-	function valuesToPosition(vals: { r: number; g: number; b: number }) {
-		// Convert RGB values to wheel position
-		const magnitude = Math.sqrt(vals.r * vals.r + vals.g * vals.g + vals.b * vals.b);
-		const angle = Math.atan2(vals.g, vals.r);
-		
-		const distance = Math.min(magnitude * wheelRadius * 0.5, wheelRadius);
-		const x = wheelCenter.x + Math.cos(angle) * distance;
-		const y = wheelCenter.y + Math.sin(angle) * distance;
-		
-		return { x, y };
-	}
-	
-	function positionToValues(pos: { x: number; y: number }) {
-		const dx = pos.x - wheelCenter.x;
-		const dy = pos.y - wheelCenter.y;
-		const distance = Math.sqrt(dx * dx + dy * dy);
-		const angle = Math.atan2(dy, dx);
-		
-		// Clamp to wheel radius
-		const clampedDistance = Math.min(distance, wheelRadius);
-		const normalizedDistance = clampedDistance / wheelRadius;
-		
-		// Convert to RGB values based on control type
-		const magnitude = normalizedDistance * 2 * sensitivity;
-		const r = Math.cos(angle) * magnitude;
-		const g = Math.sin(angle) * magnitude;
-		const b = 0; // For now, we'll use 2D control (R/G plane)
-		
-		// Apply control-specific constraints
-		const range = controlInfo.range;
-		const clampedR = Math.max(range[0], Math.min(range[1], r));
-		const clampedG = Math.max(range[0], Math.min(range[1], g));
-		const clampedB = Math.max(range[0], Math.min(range[1], b));
-		
-		return { r: clampedR, g: clampedG, b: clampedB };
-	}
-	
-	function updateIndicatorPosition() {
-		if (animationFrame) {
-			cancelAnimationFrame(animationFrame);
-		}
-		
-		animationFrame = requestAnimationFrame(() => {
-			drawColorWheel();
-		});
-	}
-	
-	function handlePointerDown(event: PointerEvent) {
-		if (disabled) return;
-		
-		event.preventDefault();
-		canvas.setPointerCapture(event.pointerId);
-		
-		const rect = canvas.getBoundingClientRect();
-		const x = event.clientX - rect.left;
-		const y = event.clientY - rect.top;
-		
-		isDragging = true;
-		dragStartPos = { x, y };
-		currentPos = { x, y };
-		
-		// Check for double-tap to toggle fullscreen
-		const now = Date.now();
-		if (now - lastTouchTime < 300) {
-			tapCount++;
-			if (tapCount === 2) {
-				dispatch('fullscreenToggle', { wheelType, controlType });
-				tapCount = 0;
-			}
-		} else {
-			tapCount = 1;
-		}
-		lastTouchTime = now;
-		
-		// Provide haptic feedback if available
-		if (browser && 'vibrate' in navigator) {
-			navigator.vibrate(10);
-		}
-		
-		updateFromPosition({ x, y });
-	}
-	
-	function handlePointerMove(event: PointerEvent) {
-		if (!isDragging || disabled) return;
-		
-		event.preventDefault();
-		
-		const rect = canvas.getBoundingClientRect();
-		const x = event.clientX - rect.left;
-		const y = event.clientY - rect.top;
-		
-		currentPos = { x, y };
-		updateFromPosition({ x, y });
-	}
-	
-	function handlePointerUp(event: PointerEvent) {
-		if (!isDragging) return;
-		
-		event.preventDefault();
-		canvas.releasePointerCapture(event.pointerId);
-		
-		isDragging = false;
-		
-		// Provide haptic feedback if available
-		if (browser && 'vibrate' in navigator) {
-			navigator.vibrate(5);
-		}
-	}
-	
-	function updateFromPosition(pos: { x: number; y: number }) {
-		const newValues = positionToValues(pos);
-		
-		// Only dispatch if values actually changed
-		if (newValues.r !== values.r || newValues.g !== values.g || newValues.b !== values.b) {
-			dispatch('change', {
-				wheelType,
-				controlType,
-				values: newValues
-			});
-		}
-		
-		updateIndicatorPosition();
-	}
-	
-	function handleReset() {
-		if (disabled) return;
-		
-		const defaultValue = controlInfo.defaultValue;
-		const resetValues = { r: defaultValue, g: defaultValue, b: defaultValue };
-		
-		dispatch('reset', { wheelType, controlType });
-		
-		// Provide haptic feedback
-		if (browser && 'vibrate' in navigator) {
-			navigator.vibrate([10, 50, 10]);
-		}
-		
-		updateIndicatorPosition();
-	}
-	
-	function handleKeyDown(event: KeyboardEvent) {
-		if (disabled) return;
-		
-		const step = 0.1 * sensitivity;
-		let newValues = { ...values };
-		
-		switch (event.key) {
-			case 'ArrowLeft':
-				newValues.r = Math.max(controlInfo.range[0], newValues.r - step);
-				break;
-			case 'ArrowRight':
-				newValues.r = Math.min(controlInfo.range[1], newValues.r + step);
-				break;
-			case 'ArrowUp':
-				newValues.g = Math.min(controlInfo.range[1], newValues.g + step);
-				break;
-			case 'ArrowDown':
-				newValues.g = Math.max(controlInfo.range[0], newValues.g - step);
-				break;
-			case 'Home':
-				handleReset();
-				return;
-			case 'Enter':
-			case ' ':
-				dispatch('fullscreenToggle', { wheelType, controlType });
-				return;
-			default:
-				return;
-		}
-		
-		event.preventDefault();
-		dispatch('change', { wheelType, controlType, values: newValues });
-		updateIndicatorPosition();
-	}
-	
-	// Utility function to convert HSV to RGB
-	function hsvToRgb(h: number, s: number, v: number) {
-		const c = v * s;
-		const x = c * (1 - Math.abs(((h * 6) % 2) - 1));
-		const m = v - c;
-		
-		let r = 0, g = 0, b = 0;
-		
-		if (h < 1/6) {
-			r = c; g = x; b = 0;
-		} else if (h < 2/6) {
-			r = x; g = c; b = 0;
-		} else if (h < 3/6) {
-			r = 0; g = c; b = x;
-		} else if (h < 4/6) {
-			r = 0; g = x; b = c;
-		} else if (h < 5/6) {
-			r = x; g = 0; b = c;
-		} else {
-			r = c; g = 0; b = x;
-		}
-		
-		return {
-			r: Math.round((r + m) * 255),
-			g: Math.round((g + m) * 255),
-			b: Math.round((b + m) * 255)
-		};
-	}
-	
-	// Reactive updates
-	$: if (canvas && ctx) {
-		setupCanvas();
-		updateIndicatorPosition();
-	}
-	
-	$: if (values) {
-		updateIndicatorPosition();
-	}
+  import { onMount } from 'svelte';
+  
+  // Props
+  export let title: string = 'Color Wheel';
+  export let value: { r: number; g: number; b: number } = { r: 0, g: 0, b: 0 };
+  export let disabled: boolean = false;
+  export let onReset: (() => void) | null = null;
+  export let onChange: ((value: { r: number; g: number; b: number }) => void) | null = null;
+  
+  // Component state
+  let wheelContainer: HTMLDivElement;
+  let isDragging = false;
+  let wheelSize = 200;
+  let centerX = 0;
+  let centerY = 0;
+  let dotX = 0;
+  let dotY = 0;
+  
+  // Convert RGB values to wheel position
+  function rgbToPosition(rgb: { r: number; g: number; b: number }) {
+    // Convert RGB (-1 to 1 range) to polar coordinates
+    const magnitude = Math.sqrt(rgb.r * rgb.r + rgb.g * rgb.g + rgb.b * rgb.b);
+    const angle = Math.atan2(rgb.g, rgb.r);
+    
+    // Convert to wheel coordinates (limit magnitude to wheel radius)
+    const radius = Math.min(magnitude * (wheelSize / 2 - 20), wheelSize / 2 - 20);
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    
+    return { x, y };
+  }
+  
+  // Convert wheel position to RGB values
+  function positionToRgb(x: number, y: number) {
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const maxRadius = wheelSize / 2 - 20;
+    
+    // Limit to wheel bounds
+    const clampedDistance = Math.min(distance, maxRadius);
+    const angle = Math.atan2(deltaY, deltaX);
+    
+    // Convert to RGB values (-1 to 1 range)
+    const magnitude = clampedDistance / maxRadius;
+    const r = magnitude * Math.cos(angle);
+    const g = magnitude * Math.sin(angle);
+    const b = 0; // For 2D wheel, B is typically controlled separately or derived
+    
+    return { r, g, b };
+  }
+  
+  // Update dot position based on current RGB values
+  function updateDotPosition() {
+    if (!wheelContainer) return;
+    
+    const rect = wheelContainer.getBoundingClientRect();
+    centerX = wheelSize / 2;
+    centerY = wheelSize / 2;
+    
+    const pos = rgbToPosition(value);
+    dotX = pos.x;
+    dotY = pos.y;
+  }
+  
+  // Handle mouse/touch events
+  function handlePointerDown(event: PointerEvent) {
+    if (disabled) return;
+    
+    event.preventDefault();
+    isDragging = true;
+    wheelContainer.setPointerCapture(event.pointerId);
+    handlePointerMove(event);
+  }
+  
+  function handlePointerMove(event: PointerEvent) {
+    if (!isDragging || disabled) return;
+    
+    const rect = wheelContainer.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Check if within wheel bounds
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const maxRadius = wheelSize / 2 - 20;
+    
+    if (distance <= maxRadius) {
+      dotX = x;
+      dotY = y;
+    } else {
+      // Clamp to wheel edge
+      const angle = Math.atan2(deltaY, deltaX);
+      dotX = centerX + maxRadius * Math.cos(angle);
+      dotY = centerY + maxRadius * Math.sin(angle);
+    }
+    
+    // Convert position to RGB and notify parent
+    const newRgb = positionToRgb(dotX, dotY);
+    value = newRgb;
+    
+    if (onChange) {
+      onChange(newRgb);
+    }
+  }
+  
+  function handlePointerUp(event: PointerEvent) {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    wheelContainer.releasePointerCapture(event.pointerId);
+  }
+  
+  function handleReset() {
+    if (disabled || !onReset) return;
+    
+    value = { r: 0, g: 0, b: 0 };
+    updateDotPosition();
+    onReset();
+  }
+  
+  onMount(() => {
+    updateDotPosition();
+    
+    // Update position when value changes externally
+    const unsubscribe = () => {
+      updateDotPosition();
+    };
+    
+    return unsubscribe;
+  });
+  
+  // Reactive updates
+  $: if (wheelContainer) {
+    updateDotPosition();
+  }
 </script>
 
-<div 
-	class="color-wheel-container {fullscreen ? 'fullscreen' : ''}"
-	class:disabled
->
-	<!-- Wheel Header -->
-	<div class="wheel-header">
-		<div class="wheel-info">
-			<h3 class="wheel-title">{wheelType} - {controlInfo.label}</h3>
-			{#if !fullscreen}
-				<p class="wheel-description">{controlInfo.description}</p>
-			{/if}
-		</div>
-		
-		<div class="wheel-actions">
-			{#if !fullscreen}
-				<button 
-					class="btn-expand"
-					on:click={() => dispatch('fullscreenToggle', { wheelType, controlType })}
-					disabled={disabled}
-					title="Expand to fullscreen"
-				>
-					⛶
-				</button>
-			{/if}
-			
-			<button 
-				class="btn-reset"
-				on:click={handleReset}
-				disabled={disabled}
-				title="Reset to default"
-			>
-				↺
-			</button>
-		</div>
-	</div>
-	
-	<!-- Color Wheel Canvas -->
-	<div class="wheel-canvas-container">
-		<canvas
-			bind:this={canvas}
-			class="color-wheel-canvas"
-			width={wheelSize}
-			height={wheelSize}
-			tabindex={disabled ? -1 : 0}
-			role="slider"
-			aria-label="{wheelType} {controlInfo.label} color wheel"
-			aria-valuemin={controlInfo.range[0]}
-			aria-valuemax={controlInfo.range[1]}
-			aria-valuenow={Math.round((values.r + values.g + values.b) / 3 * 100) / 100}
-			on:pointerdown={handlePointerDown}
-			on:pointermove={handlePointerMove}
-			on:pointerup={handlePointerUp}
-			on:keydown={handleKeyDown}
-		/>
-		
-		<!-- Touch overlay for better mobile interaction -->
-		<div class="touch-overlay" class:active={isDragging}></div>
-	</div>
-	
-	<!-- Value Display -->
-	{#if showValues}
-		<div class="value-display">
-			<div class="value-row">
-				<span class="value-label">R:</span>
-				<span class="value-number">{values.r.toFixed(3)}</span>
-			</div>
-			<div class="value-row">
-				<span class="value-label">G:</span>
-				<span class="value-number">{values.g.toFixed(3)}</span>
-			</div>
-			<div class="value-row">
-				<span class="value-label">B:</span>
-				<span class="value-number">{values.b.toFixed(3)}</span>
-			</div>
-		</div>
-	{/if}
-	
-	<!-- Fullscreen Close Button -->
-	{#if fullscreen}
-		<button 
-			class="btn-close-fullscreen"
-			on:click={() => dispatch('fullscreenToggle', { wheelType, controlType })}
-			title="Exit fullscreen"
-		>
-			✕
-		</button>
-	{/if}
+<div class="color-wheel-container">
+  <!-- Wheel Header -->
+  <div class="wheel-header">
+    <h3 class="wheel-title">{title}</h3>
+    {#if onReset}
+      <button 
+        class="reset-button" 
+        on:click={handleReset}
+        disabled={disabled}
+      >
+        Reset
+      </button>
+    {/if}
+  </div>
+  
+  <!-- Color Wheel -->
+  <div 
+    class="color-wheel"
+    class:disabled
+    bind:this={wheelContainer}
+    on:pointerdown={handlePointerDown}
+    on:pointermove={handlePointerMove}
+    on:pointerup={handlePointerUp}
+    on:pointercancel={handlePointerUp}
+    style="width: {wheelSize}px; height: {wheelSize}px;"
+  >
+    <!-- Color Gradient Background -->
+    <div class="wheel-gradient"></div>
+    
+    <!-- Grid Lines -->
+    <div class="wheel-grid">
+      <!-- Horizontal line -->
+      <div class="grid-line horizontal"></div>
+      <!-- Vertical line -->
+      <div class="grid-line vertical"></div>
+    </div>
+    
+    <!-- Center Dot -->
+    <div class="center-dot"></div>
+    
+    <!-- Draggable Control Dot -->
+    <div 
+      class="control-dot"
+      class:dragging={isDragging}
+      style="left: {dotX - 8}px; top: {dotY - 8}px;"
+    ></div>
+  </div>
+  
+  <!-- RGB Values Display -->
+  <div class="rgb-display">
+    <div class="rgb-value">
+      <span class="rgb-label r">R</span>
+      <span class="rgb-number">{value.r.toFixed(3)}</span>
+    </div>
+    <div class="rgb-value">
+      <span class="rgb-label g">G</span>
+      <span class="rgb-number">{value.g.toFixed(3)}</span>
+    </div>
+    <div class="rgb-value">
+      <span class="rgb-label b">B</span>
+      <span class="rgb-number">{value.b.toFixed(3)}</span>
+    </div>
+  </div>
 </div>
 
 <style>
-	.color-wheel-container {
-		@apply relative bg-arri-gray rounded-lg p-4;
-		@apply border border-gray-600;
-		@apply transition-all duration-300;
-		touch-action: none;
-		user-select: none;
-	}
-	
-	.color-wheel-container.fullscreen {
-		@apply fixed inset-0 z-50 bg-black bg-opacity-95;
-		@apply flex flex-col items-center justify-center;
-		@apply p-8;
-		border-radius: 0;
-	}
-	
-	.color-wheel-container.disabled {
-		@apply opacity-50 cursor-not-allowed;
-	}
-	
-	.wheel-header {
-		@apply flex items-center justify-between mb-4;
-	}
-	
-	.wheel-info {
-		@apply flex-1;
-	}
-	
-	.wheel-title {
-		@apply text-lg font-medium capitalize;
-		@apply text-white;
-	}
-	
-	.wheel-description {
-		@apply text-sm text-gray-400 mt-1;
-	}
-	
-	.wheel-actions {
-		@apply flex gap-2;
-	}
-	
-	.btn-expand, .btn-reset {
-		@apply w-10 h-10 rounded bg-gray-700 hover:bg-gray-600;
-		@apply flex items-center justify-center;
-		@apply text-white font-bold transition-colors;
-		@apply disabled:opacity-50 disabled:cursor-not-allowed;
-	}
-	
-	.btn-expand:hover:not(:disabled) {
-		@apply bg-arri-red;
-	}
-	
-	.btn-reset:hover:not(:disabled) {
-		@apply bg-blue-600;
-	}
-	
-	.wheel-canvas-container {
-		@apply relative flex items-center justify-center;
-		@apply mb-4;
-	}
-	
-	.color-wheel-canvas {
-		@apply cursor-crosshair;
-		@apply focus:outline-none focus:ring-2 focus:ring-arri-red focus:ring-opacity-50;
-		@apply rounded-full;
-		filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-	}
-	
-	.color-wheel-canvas:disabled {
-		@apply cursor-not-allowed;
-	}
-	
-	.touch-overlay {
-		@apply absolute inset-0 pointer-events-none;
-		@apply rounded-full;
-		@apply transition-all duration-150;
-	}
-	
-	.touch-overlay.active {
-		@apply bg-white bg-opacity-10;
-		@apply ring-2 ring-arri-red ring-opacity-50;
-	}
-	
-	.value-display {
-		@apply grid grid-cols-3 gap-4 text-sm;
-		@apply bg-gray-800 rounded p-3;
-	}
-	
-	.value-row {
-		@apply flex items-center justify-between;
-	}
-	
-	.value-label {
-		@apply text-gray-400 font-medium;
-	}
-	
-	.value-number {
-		@apply text-white font-mono;
-	}
-	
-	.btn-close-fullscreen {
-		@apply absolute top-4 right-4;
-		@apply w-12 h-12 rounded-full bg-gray-800 hover:bg-gray-700;
-		@apply flex items-center justify-center;
-		@apply text-white text-xl font-bold;
-		@apply transition-colors;
-	}
-	
-	/* Responsive adjustments */
-	@media (max-width: 480px) {
-		.color-wheel-container.fullscreen {
-			@apply p-4;
-		}
-		
-		.wheel-header {
-			@apply flex-col items-start gap-2;
-		}
-		
-		.wheel-actions {
-			@apply self-end;
-		}
-		
-		.value-display {
-			@apply grid-cols-1 gap-2;
-		}
-	}
-	
-	/* High contrast mode support */
-	@media (prefers-contrast: high) {
-		.color-wheel-canvas {
-			@apply ring-2 ring-white;
-		}
-		
-		.btn-expand, .btn-reset {
-			@apply border border-white;
-		}
-	}
-	
-	/* Reduced motion support */
-	@media (prefers-reduced-motion: reduce) {
-		.color-wheel-container, .touch-overlay, .btn-expand, .btn-reset {
-			@apply transition-none;
-		}
-	}
-	
-	/* Dark mode adjustments */
-	@media (prefers-color-scheme: dark) {
-		.wheel-title {
-			@apply text-gray-100;
-		}
-		
-		.wheel-description {
-			@apply text-gray-300;
-		}
-	}
+  .color-wheel-container {
+    @apply flex flex-col items-center space-y-4;
+  }
+  
+  .wheel-header {
+    @apply flex justify-between items-center w-full;
+  }
+  
+  .wheel-title {
+    @apply text-lg font-medium capitalize text-white;
+  }
+  
+  .reset-button {
+    @apply bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium py-1 px-3 rounded;
+    @apply transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .color-wheel {
+    @apply relative rounded-full cursor-crosshair select-none;
+    @apply border-2 border-gray-600;
+    touch-action: none;
+  }
+  
+  .color-wheel.disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  .wheel-gradient {
+    @apply absolute inset-0 rounded-full;
+    background: conic-gradient(
+      from -90deg,
+      #ffff00 0deg,    /* 12:00 - Yellow */
+      #ff8000 60deg,   /* 2:00 - Orange */
+      #ff0040 90deg,   /* 3:00 - Red-Pink */
+      #ff00ff 120deg,  /* 4:00 - Magenta */
+      #8000ff 150deg,  /* 5:00 - Purple */
+      #0000ff 180deg,  /* 6:00 - Blue */
+      #0080ff 210deg,  /* 7:00 - Blue-Cyan */
+      #00ffff 240deg,  /* 8:00 - Cyan */
+      #00ff00 270deg,  /* 9:00 - Green */
+      #80ff00 300deg,  /* 10:00 - Yellow-Green */
+      #ffff00 360deg   /* 12:00 - Back to Yellow */
+    );
+    mask: radial-gradient(circle, transparent 20px, black 20px);
+    -webkit-mask: radial-gradient(circle, transparent 20px, black 20px);
+  }
+  
+  .wheel-grid {
+    @apply absolute inset-0 pointer-events-none;
+  }
+  
+  .grid-line {
+    @apply absolute bg-gray-500 opacity-30;
+  }
+  
+  .grid-line.horizontal {
+    @apply w-full h-px top-1/2 left-0;
+    transform: translateY(-0.5px);
+  }
+  
+  .grid-line.vertical {
+    @apply h-full w-px left-1/2 top-0;
+    transform: translateX(-0.5px);
+  }
+  
+  .center-dot {
+    @apply absolute w-2 h-2 bg-white rounded-full border border-gray-400;
+    @apply top-1/2 left-1/2;
+    transform: translate(-50%, -50%);
+  }
+  
+  .control-dot {
+    @apply absolute w-4 h-4 bg-white rounded-full border-2 border-gray-800;
+    @apply shadow-lg cursor-grab transition-transform;
+    @apply pointer-events-none;
+  }
+  
+  .control-dot.dragging {
+    @apply cursor-grabbing scale-110;
+  }
+  
+  .rgb-display {
+    @apply flex space-x-6 text-sm font-mono;
+  }
+  
+  .rgb-value {
+    @apply flex flex-col items-center space-y-1;
+  }
+  
+  .rgb-label {
+    @apply font-bold text-xs;
+  }
+  
+  .rgb-label.r {
+    @apply text-red-400;
+  }
+  
+  .rgb-label.g {
+    @apply text-green-400;
+  }
+  
+  .rgb-label.b {
+    @apply text-blue-400;
+  }
+  
+  .rgb-number {
+    @apply text-gray-300;
+  }
+  
+  /* Touch device optimizations */
+  @media (hover: none) and (pointer: coarse) {
+    .control-dot {
+      @apply w-6 h-6;
+    }
+    
+    .color-wheel {
+      @apply cursor-default;
+    }
+  }
+  
+  /* High contrast mode */
+  @media (prefers-contrast: high) {
+    .color-wheel {
+      @apply border-white;
+    }
+    
+    .control-dot {
+      @apply border-white;
+    }
+    
+    .center-dot {
+      @apply border-white;
+    }
+  }
+  
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .control-dot {
+      @apply transition-none;
+    }
+  }
 </style>

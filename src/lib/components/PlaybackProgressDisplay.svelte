@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { playbackStore } from '$lib/stores';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { playbackStore, isUsingMocks } = safeStoreAccess();
 	
 	// Props
 	export let showDetailed = true;

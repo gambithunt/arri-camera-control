@@ -9,7 +9,36 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { logger } = require('./utils/logger.js');
 const { WebSocketManager } = require('./websocket/websocketManager.js');
-const { CAPConnectionManager } = require('./cap/connectionManager.js');
+// Mock CAP Connection Manager for testing without camera
+class MockCAPConnectionManager {
+  constructor(options = {}) {
+    this.options = options;
+    this.connected = false;
+  }
+  
+  getStatus() {
+    return {
+      state: 'disconnected',
+      connected: false,
+      authenticated: false,
+      reconnectAttempts: 0,
+      maxReconnectAttempts: 5,
+      lastError: null,
+      metrics: {
+        connectTime: null,
+        disconnectTime: null,
+        totalConnections: 0,
+        totalDisconnections: 0,
+        totalErrors: 0,
+        uptime: 0
+      }
+    };
+  }
+  
+  disconnect() {
+    this.connected = false;
+  }
+}
 
 // Load environment variables
 require('dotenv').config();
@@ -23,7 +52,11 @@ class ArriCameraControlServer {
     // Initialize Socket.io with CORS configuration
     this.io = new Server(this.server, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: [
+          "http://localhost:5173",
+          "http://localhost:5174",
+          process.env.FRONTEND_URL
+        ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -31,7 +64,7 @@ class ArriCameraControlServer {
     });
 
     // Initialize managers
-    this.capManager = new CAPConnectionManager({
+    this.capManager = new MockCAPConnectionManager({
       maxReconnectAttempts: 5,
       reconnectDelay: 2000,
       healthCheckTimeout: 10000,
@@ -41,7 +74,7 @@ class ArriCameraControlServer {
       }
     });
 
-    this.wsManager = new WebSocketManager(this.io, this.capManager);
+    this.wsManager = new WebSocketManager(this.server);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -55,7 +88,11 @@ class ArriCameraControlServer {
   setupMiddleware() {
     // CORS configuration
     this.app.use(cors({
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        process.env.FRONTEND_URL
+      ].filter(Boolean),
       credentials: true
     }));
 

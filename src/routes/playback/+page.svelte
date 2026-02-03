@@ -5,14 +5,16 @@
 	import PlaybackControls from '$lib/components/PlaybackControls.svelte';
 	import PlaybackStateManager from '$lib/components/PlaybackStateManager.svelte';
 	import PlaybackProgressDisplay from '$lib/components/PlaybackProgressDisplay.svelte';
-	import { playbackStore, connectionStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { playbackStore, connectionStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 	
 	// Reactive store subscriptions
 	$: playbackState = $playbackStore;
-	$: connectionStatus = $connectionStore.overallStatus;
-	$: isConnected = $connectionStatus.fullyConnected;
-	$: isLoading = $playbackStore.operations.loading;
+	$: connectionState = $connectionStore;
+	$: isConnected = connectionState.overallStatus.fullyConnected;
+	$: isLoading = playbackState.operations?.loading || false;
 	
 	onMount(() => {
 		console.log('Playback page initialized');
@@ -72,7 +74,7 @@
 				<button 
 					class="btn-primary w-full" 
 					on:click={enterPlaybackMode}
-					disabled={playbackState.enteringPlaybackMode || $isLoading}
+					disabled={playbackState.enteringPlaybackMode || isLoading}
 				>
 					{#if playbackState.enteringPlaybackMode}
 						Entering Playback Mode...
@@ -91,7 +93,7 @@
 					<button 
 						class="btn-secondary text-sm" 
 						on:click={exitPlaybackMode}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						Exit Playback
 					</button>
@@ -102,7 +104,7 @@
 				
 				<!-- Playback State Manager (invisible, manages state updates) -->
 				<PlaybackStateManager 
-					enabled={isConnected && !$isLoading}
+					enabled={isConnected && !isLoading}
 					showStatusIndicator={true}
 				/>
 				
@@ -114,10 +116,10 @@
 				/>
 				
 				<!-- Playback Controls -->
-				<PlaybackControls disabled={!isConnected || $isLoading} />
+				<PlaybackControls disabled={!isConnected || isLoading} />
 				
 				<!-- Clip Browser -->
-				<ClipBrowser disabled={!isConnected || $isLoading} />
+				<ClipBrowser disabled={!isConnected || isLoading} />
 			</div>
 		{/if}
 	{:else}

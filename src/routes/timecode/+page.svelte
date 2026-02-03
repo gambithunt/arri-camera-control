@@ -2,14 +2,16 @@
 	import { onMount, onDestroy } from 'svelte';
 	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 	import TimecodeDisplay from '$lib/components/TimecodeDisplay.svelte';
-	import { cameraStore, connectionStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
-	
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+
+	// Safe store access with fallbacks
+	const { cameraStore, connectionStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
+
 	// Reactive store subscriptions
 	$: cameraState = $cameraStore;
-	$: connectionStatus = $connectionStore.overallStatus;
-	$: isConnected = $connectionStatus.fullyConnected;
-	$: isLoading = $cameraStore.operations.loading;
+	$: connectionState = $connectionStore;
+	$: isConnected = connectionState.overallStatus.fullyConnected;
+	$: isLoading = cameraState.operations?.loading || false;
 	
 	// Local state
 	let manualTimecode = '';
@@ -174,21 +176,21 @@
 					<button 
 						class="btn-mode {timecodeMode === 'free_run' ? 'active' : ''}"
 						on:click={() => setTimecodeMode('free_run')}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						Free Run
 					</button>
 					<button 
 						class="btn-mode {timecodeMode === 'record_run' ? 'active' : ''}"
 						on:click={() => setTimecodeMode('record_run')}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						Record Run
 					</button>
 					<button 
 						class="btn-mode {timecodeMode === 'external' ? 'active' : ''}"
 						on:click={() => setTimecodeMode('external')}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						External
 					</button>
@@ -217,7 +219,7 @@
 					<button 
 						class="btn-action" 
 						on:click={syncToTimeOfDay}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						<div class="action-icon">🕐</div>
 						<div class="action-text">
@@ -229,7 +231,7 @@
 					<button 
 						class="btn-action" 
 						on:click={() => showManualEntry = true}
-						disabled={$isLoading}
+						disabled={isLoading}
 					>
 						<div class="action-icon">✏️</div>
 						<div class="action-text">

@@ -45,10 +45,19 @@
 	});
 	
 	function handleDismiss(notification: Notification) {
-		if (!notification.dismissible) return;
+		console.log('Dismissing notification:', notification.id);
+		
+		if (!notification.dismissible) {
+			console.log('Notification is not dismissible');
+			return;
+		}
 		
 		// Trigger haptic feedback
-		triggerHaptic({ type: 'light' });
+		try {
+			triggerHaptic({ type: 'light' });
+		} catch (error) {
+			console.warn('Haptic feedback failed:', error);
+		}
 		
 		dismissNotification(notification.id);
 	}
@@ -158,13 +167,12 @@
 					
 					{#if notification.dismissible}
 						<button
-							class="dismiss-btn text-white hover:text-gray-200 transition-colors p-1 -m-1 flex-shrink-0"
-							on:click={() => handleDismiss(notification)}
+							class="dismiss-btn text-white hover:text-gray-200 transition-colors p-1 -m-1 flex-shrink-0 text-lg font-bold"
+							on:click|stopPropagation={() => handleDismiss(notification)}
 							aria-label="Dismiss notification"
+							type="button"
 						>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-							</svg>
+							×
 						</button>
 					{/if}
 				</div>
@@ -241,10 +249,26 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 4px;
+		border: none;
+		background: transparent;
+		cursor: pointer;
 		
 		/* Optimize for touch */
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
+		
+		/* Ensure it's clickable */
+		position: relative;
+		z-index: 10;
+	}
+	
+	.dismiss-btn:hover {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+	
+	.dismiss-btn:active {
+		background-color: rgba(255, 255, 255, 0.2);
+		transform: scale(0.95);
 	}
 	
 	.action-btn {

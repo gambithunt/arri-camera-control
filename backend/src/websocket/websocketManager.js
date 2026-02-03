@@ -392,6 +392,38 @@ class WebSocketManager {
     this.io.emit('playback:progress:update', progress);
   }
 
+  /**
+   * Initialize the WebSocket manager
+   */
+  async initialize() {
+    console.log('WebSocket manager initialized');
+    return Promise.resolve();
+  }
+
+  /**
+   * Handle new socket connection
+   */
+  handleConnection(socket) {
+    // This method is called from server.js but the logic is already in setupEventHandlers
+    // Just log that we're handling the connection
+    console.log('Handling connection for socket:', socket.id);
+  }
+
+  /**
+   * Get connection count
+   */
+  getConnectionCount() {
+    return this.clients.size;
+  }
+
+  /**
+   * Cleanup resources
+   */
+  async cleanup() {
+    this.closeAllConnections();
+    return Promise.resolve();
+  }
+
   reset() {
     // Reset any internal state for testing
     this.clients.clear();

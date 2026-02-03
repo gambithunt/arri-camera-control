@@ -351,26 +351,6 @@ const playbackActions = {
   },
 
   /**
-   * Set operation loading state
-   */
-  setOperationLoading(command: string, loading: boolean) {
-    if (loading) {
-      playbackOperations.update(ops => ({
-        ...ops,
-        lastCommand: command,
-        pendingCommands: [...ops.pendingCommands, command]
-      }));
-      playbackOperations.setLoading(true);
-    } else {
-      playbackOperations.update(ops => ({
-        ...ops,
-        pendingCommands: ops.pendingCommands.filter(cmd => cmd !== command)
-      }));
-      playbackOperations.setLoading(false);
-    }
-  },
-
-  /**
    * Set operation error
    */
   setOperationError(error: string | null) {

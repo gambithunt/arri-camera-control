@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { cameraStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
 	
 	// Props
 	export let disabled = false;
 	export let showLabel = true;
 	export let compact = false;
+	
+	// Safe store access with fallbacks
+	const { cameraStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 	
 	// Reactive store subscriptions
 	$: cameraState = $cameraStore;

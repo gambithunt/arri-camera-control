@@ -37,27 +37,14 @@
 		
 		<!-- Mobile App Initialization -->
 		<script>
-			// Initialize mobile app if running in Capacitor
+			// Simple initialization for UI testing
+			console.log('ARRI Camera Control App starting...');
+			
+			// Skip mobile adapter initialization for now to allow UI testing
 			if (window.Capacitor) {
 				console.log('Running in Capacitor mobile app');
-				
-				// Import and initialize mobile adapter for offline-first architecture
-				import('/src/lib/mobile/mobile-adapter.js').then(({ mobileAdapter }) => {
-					mobileAdapter.initialize().then((success) => {
-						if (success) {
-							console.log('Mobile app initialized successfully');
-						} else {
-							console.error('Mobile app initialization failed');
-						}
-					}).catch(console.error);
-				});
 			} else {
-				console.log('Running in web browser');
-				
-				// For web platforms, still initialize the mobile adapter for offline functionality
-				import('/src/lib/mobile/mobile-adapter.js').then(({ mobileAdapter }) => {
-					mobileAdapter.initialize().catch(console.error);
-				});
+				console.log('Running in web browser - UI testing mode');
 			}
 		</script>
 	</body>

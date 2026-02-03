@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { playbackStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { playbackStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 	
 	// Props
 	export let updateInterval = 100; // Update interval in milliseconds

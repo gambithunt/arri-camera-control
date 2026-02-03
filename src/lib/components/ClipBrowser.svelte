@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { playbackStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { playbackStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 	
 	// Props
 	export let disabled = false;
@@ -553,11 +555,16 @@
 	}
 	
 	.clips-container.grid {
-		@apply grid grid-cols-2 gap-4 space-y-0;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+		margin-top: 0;
+		margin-bottom: 0;
 	}
 	
 	.compact .clips-container.grid {
-		@apply grid-cols-3 gap-2;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.5rem;
 	}
 	
 	.clip-item {
@@ -638,7 +645,7 @@
 	/* Responsive adjustments */
 	@media (max-width: 480px) {
 		.clips-container.grid {
-			@apply grid-cols-1;
+			grid-template-columns: repeat(1, minmax(0, 1fr));
 		}
 		
 		.filters-container {

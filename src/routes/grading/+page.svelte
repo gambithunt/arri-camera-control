@@ -1,17 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
-	import { cameraStore, connectionStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import ColorWheel from '$lib/components/ColorWheel.svelte';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+
+	// Safe store access with fallbacks
+	const { cameraStore, connectionStore, notificationStore, cameraApi, isUsingMocks } = safeStoreAccess();
 
 	// Reactive store subscriptions
 	$: cameraState = $cameraStore;
-	$: connectionStatus = $connectionStore.overallStatus;
-	$: isConnected = $connectionStatus.fullyConnected;
-	$: isLoading = $cameraStore.operations.loading;
+	$: connectionState = $connectionStore;
+	$: isConnected = connectionState.overallStatus.fullyConnected;
+	$: isLoading = cameraState.operations?.loading || false;
 
 	// Color grading state
 	let selectedWheel: 'shadows' | 'midtones' | 'highlights' = 'shadows';
+	let showSaveLUTDialog = false;
+	let newLUTName = '';
 
 	type CDLValues = {
 		[K in 'shadows' | 'midtones' | 'highlights']: {
@@ -142,20 +147,42 @@
 		}
 	}
 
-	async function saveLUT() {
+	function showSaveLUTInput() {
 		if (!isConnected) {
 			notificationStore.error('Not Connected', 'Please connect to camera first');
 			return;
 		}
+		showSaveLUTDialog = true;
+		newLUTName = '';
+	}
 
-		const lutName = `Custom_${Date.now()}`;
+	function cancelSaveLUT() {
+		showSaveLUTDialog = false;
+		newLUTName = '';
+	}
+
+	async function saveLUT() {
+		if (!newLUTName.trim()) {
+			notificationStore.warning('Invalid Name', 'Please enter a name for the LUT');
+			return;
+		}
+
+		const lutName = newLUTName.trim();
+
+		// Check if name already exists
+		if (savedLUTs.includes(lutName)) {
+			notificationStore.warning('Name Exists', 'A LUT with this name already exists');
+			return;
+		}
 
 		try {
 			const result = await cameraApi.saveLUT(lutName);
 			if (result.success) {
 				savedLUTs = [...savedLUTs, lutName];
 				cameraStore.updateSettings({ currentLUT: lutName });
-				notificationStore.success('LUT Saved', `Saved as ${lutName}`);
+				notificationStore.success('LUT Saved', `Saved as "${lutName}"`);
+				showSaveLUTDialog = false;
+				newLUTName = '';
 			} else {
 				notificationStore.error('LUT Save Failed', result.error || 'Failed to save LUT');
 			}
@@ -179,6 +206,22 @@
 				return 'from-gray-600 to-gray-400';
 		}
 	}
+
+	// Get RGB value for the current wheel (using lift values for wheel position)
+	function getWheelRGBValue(wheel: 'shadows' | 'midtones' | 'highlights') {
+		return cdlValues[wheel].lift;
+	}
+
+	// Handle color wheel changes
+	function handleWheelChange(wheel: 'shadows' | 'midtones' | 'highlights', newValue: { r: number; g: number; b: number }) {
+		// Update the lift values based on wheel position
+		cdlValues[wheel].lift = newValue;
+		
+		// Apply the changes via the existing CDL adjustment function
+		adjustCDL(wheel, 'lift', 'r', newValue.r);
+		adjustCDL(wheel, 'lift', 'g', newValue.g);
+		adjustCDL(wheel, 'lift', 'b', newValue.b);
+	}
 </script>
 
 <div class="page-container">
@@ -200,20 +243,14 @@
 			</div>
 
 			<!-- Color Wheel Display -->
-			<div class="color-wheel-container">
-				<div class="color-wheel">
-					<div class="wheel-center">
-						<div class="wheel-title">{selectedWheel}</div>
-						<button class="reset-button" on:click={() => resetWheel(selectedWheel)}> Reset </button>
-					</div>
-					<!-- TODO: Implement actual color wheel interaction -->
-					<div class="wheel-placeholder">
-						<div class="text-center text-gray-400">
-							<div class="text-2xl mb-2">🎨</div>
-							<div class="text-sm">Touch to adjust color</div>
-						</div>
-					</div>
-				</div>
+			<div class="wheel-display">
+				<ColorWheel
+					title={selectedWheel}
+					value={getWheelRGBValue(selectedWheel)}
+					disabled={!isConnected || isLoading}
+					onReset={() => resetWheel(selectedWheel)}
+					onChange={(newValue) => handleWheelChange(selectedWheel, newValue)}
+				/>
 			</div>
 
 			<!-- CDL Controls -->
@@ -243,7 +280,7 @@
 												parseFloat(target.value)
 											);
 										}}
-										disabled={$isLoading}
+										disabled={isLoading}
 									/>
 									<span class="slider-value">
 										{cdlValues[selectedWheel][control][channel].toFixed(2)}
@@ -263,15 +300,54 @@
 						<div class="font-medium">Current LUT</div>
 						<div class="text-sm text-gray-400">
 							{cameraState.currentLUT || 'None'}
-							{#if $isLoading}
+							{#if isLoading}
 								<div class="loading-spinner inline-block ml-2"></div>
 							{/if}
 						</div>
 					</div>
-					<button class="btn-save-lut" on:click={saveLUT} disabled={$isLoading}>
+					<button class="btn-save-lut" on:click={showSaveLUTInput} disabled={isLoading}>
 						Save Current
 					</button>
 				</div>
+
+				<!-- Save LUT Dialog -->
+				{#if showSaveLUTDialog}
+					<div class="save-lut-dialog">
+						<div class="dialog-header">
+							<h4 class="dialog-title">Save LUT</h4>
+						</div>
+						<div class="dialog-content">
+							<label for="lut-name" class="input-label">LUT Name</label>
+							<input
+								id="lut-name"
+								type="text"
+								class="lut-name-input"
+								placeholder="Enter LUT name..."
+								bind:value={newLUTName}
+								on:keydown={(e) => {
+									if (e.key === 'Enter') {
+										saveLUT();
+									} else if (e.key === 'Escape') {
+										cancelSaveLUT();
+									}
+								}}
+								autofocus
+							/>
+						</div>
+						<div class="dialog-actions">
+							<button class="btn-cancel" on:click={cancelSaveLUT}>
+								Cancel
+							</button>
+							<button 
+								class="btn-save" 
+								on:click={saveLUT}
+								disabled={!newLUTName.trim()}
+							>
+								Save LUT
+							</button>
+						</div>
+					</div>
+				{/if}
 
 				<div class="lut-list">
 					<div class="text-sm text-gray-300 mb-2">Available LUTs</div>
@@ -280,7 +356,7 @@
 							<button
 								class="lut-item {cameraState.currentLUT === lut ? 'active' : ''}"
 								on:click={() => loadLUT(lut)}
-								disabled={$isLoading}
+								disabled={isLoading}
 							>
 								{lut}
 							</button>
@@ -330,30 +406,8 @@
 		@apply text-xs font-medium capitalize;
 	}
 
-	.color-wheel-container {
-		@apply bg-arri-gray rounded-lg p-4;
-	}
-
-	.color-wheel {
-		@apply relative w-full aspect-square max-w-xs mx-auto;
-	}
-
-	.wheel-center {
-		@apply absolute inset-0 flex flex-col items-center justify-center z-10;
-	}
-
-	.wheel-title {
-		@apply text-lg font-medium mb-2 capitalize;
-	}
-
-	.reset-button {
-		@apply bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium py-1 px-3 rounded;
-		@apply transition-colors;
-	}
-
-	.wheel-placeholder {
-		@apply w-full h-full rounded-full bg-gradient-to-br from-gray-700 to-gray-800;
-		@apply flex items-center justify-center border-4 border-gray-600;
+	.wheel-display {
+		@apply bg-arri-gray rounded-lg p-6;
 	}
 
 	.cdl-controls {
@@ -450,5 +504,48 @@
 
 	.loading-spinner {
 		@apply w-4 h-4 border-2 border-arri-red border-t-transparent rounded-full animate-spin;
+	}
+
+	/* Save LUT Dialog */
+	.save-lut-dialog {
+		@apply bg-gray-800 border border-gray-600 rounded-lg p-4 mt-4;
+		@apply shadow-lg;
+	}
+
+	.dialog-header {
+		@apply mb-3;
+	}
+
+	.dialog-title {
+		@apply text-sm font-medium text-white;
+	}
+
+	.dialog-content {
+		@apply mb-4;
+	}
+
+	.input-label {
+		@apply block text-xs font-medium text-gray-300 mb-2;
+	}
+
+	.lut-name-input {
+		@apply w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2;
+		@apply text-white placeholder-gray-400;
+		@apply focus:outline-none focus:border-arri-red focus:ring-1 focus:ring-arri-red;
+		@apply transition-colors;
+	}
+
+	.dialog-actions {
+		@apply flex gap-3 justify-end;
+	}
+
+	.btn-cancel {
+		@apply bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium py-2 px-4 rounded;
+		@apply transition-colors;
+	}
+
+	.btn-save {
+		@apply bg-arri-red hover:bg-red-600 text-white text-sm font-medium py-2 px-4 rounded;
+		@apply transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 	}
 </style>

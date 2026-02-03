@@ -88,7 +88,7 @@
 <ResponsiveContainer size="lg" padding="lg">
 	<div class="offline-page min-h-screen-safe flex flex-col">
 		<!-- Header -->
-		<header class="text-center spacing-responsive-lg">
+		<header class="text-center p-4 tablet:p-6">
 			<div class="offline-icon text-6xl mb-4 animate-pulse">📡</div>
 			<h1 class="text-responsive-2xl font-bold text-arri-red mb-2">
 				You're Offline
@@ -99,7 +99,7 @@
 		</header>
 		
 		<!-- Status Card -->
-		<div class="status-card bg-arri-gray rounded-lg spacing-responsive-md mb-6">
+		<div class="status-card bg-arri-gray rounded-lg p-3 tablet:p-4 mb-6">
 			<div class="flex items-center justify-between mb-4">
 				<h2 class="text-responsive-lg font-semibold">Connection Status</h2>
 				<div class="status-indicator bg-red-600 text-white px-3 py-1 rounded-full text-responsive-xs">
@@ -144,7 +144,7 @@
 			
 			<div class="features-grid grid grid-cols-1 tablet:grid-cols-2 gap-4">
 				<button
-					class="feature-card bg-arri-gray rounded-lg spacing-responsive-md text-left hover:bg-gray-600 transition-colors touch-manipulation"
+					class="feature-card bg-arri-gray rounded-lg p-3 tablet:p-4 text-left hover:bg-gray-600 transition-colors touch-manipulation"
 					on:click={() => navigateToSection('/camera')}
 					disabled={!currentStatus.isAppCached}
 				>
@@ -163,7 +163,7 @@
 				</button>
 				
 				<button
-					class="feature-card bg-arri-gray rounded-lg spacing-responsive-md text-left hover:bg-gray-600 transition-colors touch-manipulation"
+					class="feature-card bg-arri-gray rounded-lg p-3 tablet:p-4 text-left hover:bg-gray-600 transition-colors touch-manipulation"
 					on:click={() => navigateToSection('/grading')}
 					disabled={!currentStatus.isAppCached}
 				>
@@ -180,7 +180,7 @@
 				</button>
 				
 				<button
-					class="feature-card bg-arri-gray rounded-lg spacing-responsive-md text-left hover:bg-gray-600 transition-colors touch-manipulation"
+					class="feature-card bg-arri-gray rounded-lg p-3 tablet:p-4 text-left hover:bg-gray-600 transition-colors touch-manipulation"
 					on:click={() => navigateToSection('/playback')}
 					disabled={!currentStatus.isAppCached}
 				>
@@ -197,7 +197,7 @@
 				</button>
 				
 				<button
-					class="feature-card bg-arri-gray rounded-lg spacing-responsive-md text-left hover:bg-gray-600 transition-colors touch-manipulation"
+					class="feature-card bg-arri-gray rounded-lg p-3 tablet:p-4 text-left hover:bg-gray-600 transition-colors touch-manipulation"
 					on:click={() => navigateToSection('/timecode')}
 					disabled={!currentStatus.isAppCached}
 				>
@@ -245,7 +245,7 @@
 		</div>
 		
 		<!-- Tips Section -->
-		<div class="tips-section mt-8 bg-arri-dark rounded-lg spacing-responsive-md">
+		<div class="tips-section mt-8 bg-arri-dark rounded-lg p-3 tablet:p-4">
 			<h3 class="text-responsive-base font-medium mb-3 text-arri-red">Offline Tips</h3>
 			<ul class="space-y-2 text-responsive-xs text-gray-300">
 				<li class="flex items-start gap-2">

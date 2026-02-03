@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import ConnectionStatusDisplay from '$lib/components/ConnectionStatusDisplay.svelte';
+	import ConnectionSettings from '$lib/components/ConnectionSettings.svelte';
 	import ResponsiveContainer from '$lib/components/ResponsiveContainer.svelte';
 
 	// Component state
@@ -14,6 +15,13 @@
 	let showDiagnostics = true;
 	let autoRefresh = false;
 	let refreshInterval: NodeJS.Timeout | null = null;
+	
+	// Handle connection settings changes
+	function handleSettingsChange(settings: any) {
+		console.log('Connection settings updated:', settings);
+		// Here you would update the WebSocket client configuration
+		// and reconnect with the new settings
+	}
 
 	onMount(() => {
 		// Check for auto-refresh parameter
@@ -139,6 +147,11 @@
 				</span>
 			</label>
 		</div>
+	</div>
+	
+	<!-- Connection Settings -->
+	<div class="connection-settings-section mb-6">
+		<ConnectionSettings onSettingsChange={handleSettingsChange} />
 	</div>
 	
 	<!-- Connection Status Display -->

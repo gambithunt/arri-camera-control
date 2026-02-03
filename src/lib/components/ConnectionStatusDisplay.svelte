@@ -3,64 +3,396 @@
   Shows detailed connection status and diagnostics
 -->
 
-<script lang=\"ts\">
-\timport { onMount, onDestroy } from 'svelte';
-\timport { 
-\t\tconnectionStatusStore, 
-\t\tprotocolMessagesStore,
-\t\tisWebSocketConnected,
-\t\tisCameraConnected,
-\t\tisFullyConnected,
-\t\tconnectionQuality,
-\t\thasConnectionErrors,
-\t\trunDiagnostics,
-\t\texportDiagnosticData,
-\t\tclearMessageHistory,
-\t\tsetDebugMode,
-\t\ttype ConnectionStatus,
-\t\ttype ProtocolMessage,
-\t\ttype DiagnosticTest
-\t} from '$lib/utils/connectionDiagnostics';
-\timport { screenInfo } from '$lib/utils/responsiveLayout';
-\timport { triggerHaptic } from '$lib/utils/touchInteractions';
-\timport { showSuccess, showError } from '$lib/utils/errorManager';
-\t
-\t// Props
-\texport let compact = false;
-\texport let showProtocolMessages = false;
-\texport let showDiagnostics = false;
-\texport let className = '';
-\t
-\t// Component state
-\tlet status: ConnectionStatus;
-\tlet protocolMessages: ProtocolMessage[] = [];
-\tlet diagnosticTests: DiagnosticTest[] = [];
-\tlet isRunningDiagnostics = false;
-\tlet debugMode = false;
-\tlet expandedSections: Set<string> = new Set();
-\t
-\t// Reactive subscriptions
-\t$: currentScreenInfo = $screenInfo;
-\t$: isCompact = compact || currentScreenInfo.deviceType === 'phone';
-\t$: wsConnected = $isWebSocketConnected;
-\t$: cameraConnected = $isCameraConnected;
-\t$: fullyConnected = $isFullyConnected;
-\t$: quality = $connectionQuality;
-\t$: hasErrors = $hasConnectionErrors;
-\t
-\t// Subscribe to stores
-\tconst unsubscribeStatus = connectionStatusStore.subscribe(s => status = s);
-\tconst unsubscribeMessages = protocolMessagesStore.subscribe(m => protocolMessages = m);
-\t
-\tonMount(() => {
-\t\t// Refresh data
-\t\tconnectionStatusStore.refresh();
-\t\tprotocolMessagesStore.refresh(50);
-\t});
-\t
-\tonDestroy(() => {
-\t\tunsubscribeStatus();
-\t\tunsubscribeMessages();
-\t});
-\t
-\tfunction getStatusIcon(connectionStatus: string): string {\n\t\tswitch (connectionStatus) {\n\t\t\tcase 'connected':\n\t\t\t\treturn '🟢';\n\t\t\tcase 'connecting':\n\t\t\tcase 'reconnecting':\n\t\t\t\treturn '🟡';\n\t\t\tcase 'disconnected':\n\t\t\t\treturn '🔴';\n\t\t\tcase 'error':\n\t\t\t\treturn '❌';\n\t\t\tdefault:\n\t\t\t\treturn '⚪';\n\t\t}\n\t}\n\t\n\tfunction getQualityIcon(quality: string): string {\n\t\tswitch (quality) {\n\t\t\tcase 'excellent':\n\t\t\t\treturn '📶';\n\t\t\tcase 'good':\n\t\t\t\treturn '📶';\n\t\t\tcase 'fair':\n\t\t\t\treturn '📶';\n\t\t\tcase 'poor':\n\t\t\t\treturn '📶';\n\t\t\tdefault:\n\t\t\t\treturn '❓';\n\t\t}\n\t}\n\t\n\tfunction getQualityColor(quality: string): string {\n\t\tswitch (quality) {\n\t\t\tcase 'excellent':\n\t\t\t\treturn 'text-green-400';\n\t\t\tcase 'good':\n\t\t\t\treturn 'text-green-300';\n\t\t\tcase 'fair':\n\t\t\t\treturn 'text-yellow-400';\n\t\t\tcase 'poor':\n\t\t\t\treturn 'text-red-400';\n\t\t\tdefault:\n\t\t\t\treturn 'text-gray-400';\n\t\t}\n\t}\n\t\n\tfunction formatLatency(latency?: number): string {\n\t\tif (latency === undefined) return 'N/A';\n\t\treturn `${Math.round(latency)}ms`;\n\t}\n\t\n\tfunction formatUptime(seconds: number): string {\n\t\tif (seconds < 60) return `${Math.round(seconds)}s`;\n\t\tif (seconds < 3600) return `${Math.round(seconds / 60)}m`;\n\t\treturn `${Math.round(seconds / 3600)}h`;\n\t}\n\t\n\tfunction formatTimestamp(timestamp: number): string {\n\t\treturn new Date(timestamp).toLocaleTimeString();\n\t}\n\t\n\tfunction formatDataSize(bytes: number): string {\n\t\tif (bytes < 1024) return `${bytes}B`;\n\t\tif (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;\n\t\treturn `${(bytes / (1024 * 1024)).toFixed(1)}MB`;\n\t}\n\t\n\tfunction toggleSection(sectionId: string) {\n\t\tif (expandedSections.has(sectionId)) {\n\t\t\texpandedSections.delete(sectionId);\n\t\t} else {\n\t\t\texpandedSections.add(sectionId);\n\t\t}\n\t\texpandedSections = new Set(expandedSections);\n\t}\n\t\n\tasync function handleRunDiagnostics() {\n\t\ttriggerHaptic({ type: 'medium' });\n\t\tisRunningDiagnostics = true;\n\t\t\n\t\ttry {\n\t\t\tdiagnosticTests = await runDiagnostics();\n\t\t\tshowSuccess('Diagnostics Complete', 'Connection diagnostics completed successfully');\n\t\t} catch (error) {\n\t\t\tshowError('Diagnostics Failed', 'Failed to run connection diagnostics');\n\t\t\tconsole.error('Diagnostics failed:', error);\n\t\t} finally {\n\t\t\tisRunningDiagnostics = false;\n\t\t}\n\t}\n\t\n\tfunction handleExportDiagnostics() {\n\t\ttriggerHaptic({ type: 'light' });\n\t\t\n\t\ttry {\n\t\t\tconst diagnosticData = exportDiagnosticData();\n\t\t\t\n\t\t\t// Create and download file\n\t\t\tconst blob = new Blob([diagnosticData], { type: 'application/json' });\n\t\t\tconst url = URL.createObjectURL(blob);\n\t\t\tconst a = document.createElement('a');\n\t\t\ta.href = url;\n\t\t\ta.download = `camera-diagnostics-${new Date().toISOString().slice(0, 19)}.json`;\n\t\t\ta.click();\n\t\t\tURL.revokeObjectURL(url);\n\t\t\t\n\t\t\tshowSuccess('Export Complete', 'Diagnostic data exported successfully');\n\t\t} catch (error) {\n\t\t\tshowError('Export Failed', 'Failed to export diagnostic data');\n\t\t\tconsole.error('Export failed:', error);\n\t\t}\n\t}\n\t\n\tfunction handleClearMessages() {\n\t\ttriggerHaptic({ type: 'light' });\n\t\tclearMessageHistory();\n\t\tprotocolMessagesStore.refresh();\n\t\tshowSuccess('Messages Cleared', 'Protocol message history cleared');\n\t}\n\t\n\tfunction handleToggleDebug() {\n\t\tdebugMode = !debugMode;\n\t\tsetDebugMode(debugMode);\n\t\ttriggerHaptic({ type: 'selection' });\n\t\tshowSuccess(\n\t\t\t'Debug Mode',\n\t\t\t`Debug mode ${debugMode ? 'enabled' : 'disabled'}`\n\t\t);\n\t}\n\t\n\tfunction getMessageTypeColor(type: string): string {\n\t\tswitch (type) {\n\t\t\tcase 'websocket':\n\t\t\t\treturn 'text-blue-400';\n\t\t\tcase 'cap':\n\t\t\t\treturn 'text-purple-400';\n\t\t\tdefault:\n\t\t\t\treturn 'text-gray-400';\n\t\t}\n\t}\n\t\n\tfunction getDirectionIcon(direction: string): string {\n\t\treturn direction === 'sent' ? '↗️' : '↙️';\n\t}\n\t\n\tfunction getTestStatusIcon(status: string): string {\n\t\tswitch (status) {\n\t\t\tcase 'passed':\n\t\t\t\treturn '✅';\n\t\t\tcase 'failed':\n\t\t\t\treturn '❌';\n\t\t\tcase 'running':\n\t\t\t\treturn '⏳';\n\t\t\tcase 'skipped':\n\t\t\t\treturn '⏭️';\n\t\t\tdefault:\n\t\t\t\treturn '⏸️';\n\t\t}\n\t}\n</script>\n\n<div class=\"connection-status-display {className}\" class:compact={isCompact}>\n\t<!-- Main Status Overview -->\n\t<div class=\"status-overview bg-arri-gray rounded-lg p-4 mb-4\">\n\t\t<div class=\"flex items-center justify-between mb-3\">\n\t\t\t<h3 class=\"text-responsive-lg font-semibold text-white\">\n\t\t\t\tConnection Status\n\t\t\t</h3>\n\t\t\t<div class=\"status-indicators flex gap-2\">\n\t\t\t\t<span class=\"quality-indicator {getQualityColor(quality)}\" title=\"Connection Quality: {quality}\">\n\t\t\t\t\t{getQualityIcon(quality)}\n\t\t\t\t</span>\n\t\t\t\t{#if hasErrors}\n\t\t\t\t\t<span class=\"error-indicator text-red-400\" title=\"Connection Errors\">\n\t\t\t\t\t\t⚠️\n\t\t\t\t\t</span>\n\t\t\t\t{/if}\n\t\t\t</div>\n\t\t</div>\n\t\t\n\t\t<div class=\"connection-grid grid {isCompact ? 'grid-cols-1' : 'grid-cols-2'} gap-4\">\n\t\t\t<!-- WebSocket Status -->\n\t\t\t<div class=\"connection-item\">\n\t\t\t\t<div class=\"flex items-center gap-2 mb-2\">\n\t\t\t\t\t<span class=\"status-icon text-lg\">\n\t\t\t\t\t\t{getStatusIcon(status?.websocket?.status || 'disconnected')}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"connection-label text-responsive-sm font-medium text-white\">\n\t\t\t\t\t\tWebSocket\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"connection-details text-xs text-gray-400\">\n\t\t\t\t\t<div>Status: {status?.websocket?.status || 'unknown'}</div>\n\t\t\t\t\t<div>Latency: {formatLatency(status?.websocket?.latency)}</div>\n\t\t\t\t\t{#if status?.websocket?.reconnectAttempts > 0}\n\t\t\t\t\t\t<div class=\"text-yellow-400\">\n\t\t\t\t\t\t\tRetries: {status.websocket.reconnectAttempts}/{status.websocket.maxReconnectAttempts}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t{/if}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<!-- Camera Status -->\n\t\t\t<div class=\"connection-item\">\n\t\t\t\t<div class=\"flex items-center gap-2 mb-2\">\n\t\t\t\t\t<span class=\"status-icon text-lg\">\n\t\t\t\t\t\t{getStatusIcon(status?.camera?.status || 'disconnected')}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"connection-label text-responsive-sm font-medium text-white\">\n\t\t\t\t\t\tCamera\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"connection-details text-xs text-gray-400\">\n\t\t\t\t\t<div>Status: {status?.camera?.status || 'unknown'}</div>\n\t\t\t\t\t<div>Latency: {formatLatency(status?.camera?.latency)}</div>\n\t\t\t\t\t{#if status?.camera?.reconnectAttempts > 0}\n\t\t\t\t\t\t<div class=\"text-yellow-400\">\n\t\t\t\t\t\t\tRetries: {status.camera.reconnectAttempts}/{status.camera.maxReconnectAttempts}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t{/if}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t\t\n\t\t<!-- Network Info -->\n\t\t{#if status?.network && !isCompact}\n\t\t\t<div class=\"network-info mt-4 pt-3 border-t border-gray-600\">\n\t\t\t\t<div class=\"flex items-center gap-2 mb-2\">\n\t\t\t\t\t<span class=\"text-sm font-medium text-white\">Network</span>\n\t\t\t\t\t<span class=\"{status.network.online ? 'text-green-400' : 'text-red-400'}\">\n\t\t\t\t\t\t{status.network.online ? '🌐' : '📵'}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"network-details text-xs text-gray-400 grid grid-cols-2 gap-2\">\n\t\t\t\t\t{#if status.network.effectiveType}\n\t\t\t\t\t\t<div>Type: {status.network.effectiveType}</div>\n\t\t\t\t\t{/if}\n\t\t\t\t\t{#if status.network.downlink}\n\t\t\t\t\t\t<div>Speed: {status.network.downlink}Mbps</div>\n\t\t\t\t\t{/if}\n\t\t\t\t\t{#if status.network.rtt}\n\t\t\t\t\t\t<div>RTT: {status.network.rtt}ms</div>\n\t\t\t\t\t{/if}\n\t\t\t\t\t{#if status.network.saveData}\n\t\t\t\t\t\t<div class=\"text-yellow-400\">Data Saver: On</div>\n\t\t\t\t\t{/if}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t{/if}\n\t</div>\n\t\n\t<!-- Action Buttons -->\n\t<div class=\"action-buttons flex flex-wrap gap-2 mb-4\">\n\t\t<button\n\t\t\tclass=\"btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch\"\n\t\t\ton:click={handleRunDiagnostics}\n\t\t\tdisabled={isRunningDiagnostics}\n\t\t>\n\t\t\t{#if isRunningDiagnostics}\n\t\t\t\t⏳ Running...\n\t\t\t{:else}\n\t\t\t\t🔍 Run Diagnostics\n\t\t\t{/if}\n\t\t</button>\n\t\t\n\t\t<button\n\t\t\tclass=\"btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch\"\n\t\t\ton:click={handleExportDiagnostics}\n\t\t>\n\t\t\t📄 Export Data\n\t\t</button>\n\t\t\n\t\t<button\n\t\t\tclass=\"btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch\"\n\t\t\ton:click={handleToggleDebug}\n\t\t\tclass:active={debugMode}\n\t\t>\n\t\t\t🐛 Debug {debugMode ? 'On' : 'Off'}\n\t\t</button>\n\t</div>\n\t\n\t<!-- Diagnostic Tests -->\n\t{#if showDiagnostics && diagnosticTests.length > 0}\n\t\t<div class=\"diagnostic-tests bg-arri-gray rounded-lg p-4 mb-4\">\n\t\t\t<button\n\t\t\t\tclass=\"section-header w-full flex items-center justify-between text-left mb-3\"\n\t\t\t\ton:click={() => toggleSection('diagnostics')}\n\t\t\t>\n\t\t\t\t<h4 class=\"text-responsive-base font-medium text-white\">\n\t\t\t\t\tDiagnostic Tests\n\t\t\t\t</h4>\n\t\t\t\t<span class=\"text-gray-400\">\n\t\t\t\t\t{expandedSections.has('diagnostics') ? '▼' : '▶'}\n\t\t\t\t</span>\n\t\t\t</button>\n\t\t\t\n\t\t\t{#if expandedSections.has('diagnostics')}\n\t\t\t\t<div class=\"test-list space-y-2 animate-slide-down\">\n\t\t\t\t\t{#each diagnosticTests as test}\n\t\t\t\t\t\t<div class=\"test-item bg-arri-dark rounded p-3\">\n\t\t\t\t\t\t\t<div class=\"flex items-center justify-between mb-1\">\n\t\t\t\t\t\t\t\t<div class=\"flex items-center gap-2\">\n\t\t\t\t\t\t\t\t\t<span class=\"test-status\">\n\t\t\t\t\t\t\t\t\t\t{getTestStatusIcon(test.status)}\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t<span class=\"test-name text-sm font-medium text-white\">\n\t\t\t\t\t\t\t\t\t\t{test.name}\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t{#if test.duration}\n\t\t\t\t\t\t\t\t\t<span class=\"test-duration text-xs text-gray-400\">\n\t\t\t\t\t\t\t\t\t\t{Math.round(test.duration)}ms\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"test-description text-xs text-gray-400 mb-1\">\n\t\t\t\t\t\t\t\t{test.description}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t{#if test.result}\n\t\t\t\t\t\t\t\t<div class=\"test-result text-xs {test.status === 'passed' ? 'text-green-400' : test.status === 'failed' ? 'text-red-400' : 'text-gray-300'}\">\n\t\t\t\t\t\t\t\t\t{test.result}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t\t{#if test.error}\n\t\t\t\t\t\t\t\t<div class=\"test-error text-xs text-red-400 mt-1\">\n\t\t\t\t\t\t\t\t\tError: {test.error}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t{/each}\n\t\t\t\t</div>\n\t\t\t{/if}\n\t\t</div>\n\t{/if}\n\t\n\t<!-- Protocol Messages -->\n\t{#if showProtocolMessages}\n\t\t<div class=\"protocol-messages bg-arri-gray rounded-lg p-4\">\n\t\t\t<div class=\"flex items-center justify-between mb-3\">\n\t\t\t\t<button\n\t\t\t\t\tclass=\"section-header flex items-center gap-2 text-left\"\n\t\t\t\t\ton:click={() => toggleSection('messages')}\n\t\t\t\t>\n\t\t\t\t\t<h4 class=\"text-responsive-base font-medium text-white\">\n\t\t\t\t\t\tProtocol Messages ({protocolMessages.length})\n\t\t\t\t\t</h4>\n\t\t\t\t\t<span class=\"text-gray-400\">\n\t\t\t\t\t\t{expandedSections.has('messages') ? '▼' : '▶'}\n\t\t\t\t\t</span>\n\t\t\t\t</button>\n\t\t\t\t\n\t\t\t\t{#if protocolMessages.length > 0}\n\t\t\t\t\t<button\n\t\t\t\t\t\tclass=\"btn-secondary text-xs px-2 py-1 rounded transition-colors\"\n\t\t\t\t\t\ton:click={handleClearMessages}\n\t\t\t\t\t>\n\t\t\t\t\t\t🗑️ Clear\n\t\t\t\t\t</button>\n\t\t\t\t{/if}\n\t\t\t</div>\n\t\t\t\n\t\t\t{#if expandedSections.has('messages')}\n\t\t\t\t<div class=\"message-list max-h-64 overflow-y-auto animate-slide-down\">\n\t\t\t\t\t{#if protocolMessages.length === 0}\n\t\t\t\t\t\t<div class=\"no-messages text-center py-4 text-gray-400\">\n\t\t\t\t\t\t\tNo protocol messages recorded\n\t\t\t\t\t\t</div>\n\t\t\t\t\t{:else}\n\t\t\t\t\t\t{#each protocolMessages as message}\n\t\t\t\t\t\t\t<div class=\"message-item bg-arri-dark rounded p-2 mb-2 text-xs\">\n\t\t\t\t\t\t\t\t<div class=\"message-header flex items-center justify-between mb-1\">\n\t\t\t\t\t\t\t\t\t<div class=\"flex items-center gap-2\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"direction-icon\">\n\t\t\t\t\t\t\t\t\t\t\t{getDirectionIcon(message.direction)}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"message-type {getMessageTypeColor(message.type)}\">\n\t\t\t\t\t\t\t\t\t\t\t{message.type.toUpperCase()}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"message-event text-white font-medium\">\n\t\t\t\t\t\t\t\t\t\t\t{message.event}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"message-meta text-gray-400\">\n\t\t\t\t\t\t\t\t\t\t<span>{formatTimestamp(message.timestamp)}</span>\n\t\t\t\t\t\t\t\t\t\t{#if message.latency}\n\t\t\t\t\t\t\t\t\t\t\t<span class=\"ml-2\">{formatLatency(message.latency)}</span>\n\t\t\t\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t\t\t\t\t<span class=\"ml-2\">{formatDataSize(message.size)}</span>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t{#if message.error}\n\t\t\t\t\t\t\t\t\t<div class=\"message-error text-red-400 mb-1\">\n\t\t\t\t\t\t\t\t\t\tError: {message.error}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t{#if debugMode && message.data}\n\t\t\t\t\t\t\t\t\t<details class=\"message-data mt-1\">\n\t\t\t\t\t\t\t\t\t\t<summary class=\"text-gray-400 cursor-pointer hover:text-gray-300\">\n\t\t\t\t\t\t\t\t\t\t\tShow Data\n\t\t\t\t\t\t\t\t\t\t</summary>\n\t\t\t\t\t\t\t\t\t\t<pre class=\"text-gray-300 mt-1 p-2 bg-black rounded text-xs overflow-auto max-h-32\">\n{JSON.stringify(message.data, null, 2)}\n\t\t\t\t\t\t\t\t\t\t</pre>\n\t\t\t\t\t\t\t\t\t</details>\n\t\t\t\t\t\t\t\t{/if}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t{/each}\n\t\t\t\t\t{/if}\n\t\t\t\t</div>\n\t\t\t{/if}\n\t\t</div>\n\t{/if}\n</div>\n\n<style>\n\t.connection-status-display {\n\t\t/* Ensure proper spacing */\n\t\twidth: 100%;\n\t}\n\t\n\t.connection-item {\n\t\t/* Ensure proper layout */\n\t\tmin-height: 60px;\n\t}\n\t\n\t.section-header {\n\t\t/* Ensure proper touch targets */\n\t\tmin-height: 32px;\n\t\ttouch-action: manipulation;\n\t}\n\t\n\t.action-buttons button {\n\t\t/* Ensure proper touch targets */\n\t\tmin-height: 32px;\n\t\ttouch-action: manipulation;\n\t}\n\t\n\t.action-buttons button.active {\n\t\tbackground-color: #E31E24;\n\t\tcolor: white;\n\t}\n\t\n\t.message-list {\n\t\t/* Smooth scrolling */\n\t\t-webkit-overflow-scrolling: touch;\n\t\tscrollbar-width: thin;\n\t\tscrollbar-color: #4B5563 #1F2937;\n\t}\n\t\n\t.message-list::-webkit-scrollbar {\n\t\twidth: 6px;\n\t}\n\t\n\t.message-list::-webkit-scrollbar-track {\n\t\tbackground: #1F2937;\n\t}\n\t\n\t.message-list::-webkit-scrollbar-thumb {\n\t\tbackground: #4B5563;\n\t\tborder-radius: 3px;\n\t}\n\t\n\t/* Animation keyframes */\n\t@keyframes slideDown {\n\t\tfrom {\n\t\t\topacity: 0;\n\t\t\ttransform: translateY(-10px);\n\t\t}\n\t\tto {\n\t\t\topacity: 1;\n\t\t\ttransform: translateY(0);\n\t\t}\n\t}\n\t\n\t.animate-slide-down {\n\t\tanimation: slideDown 0.2s ease-out;\n\t}\n\t\n\t/* Responsive adjustments */\n\t@media (max-width: 767px) {\n\t\t.connection-status-display.compact {\n\t\t\tpadding: 0.5rem;\n\t\t}\n\t\t\n\t\t.action-buttons {\n\t\t\tflex-direction: column;\n\t\t}\n\t\t\n\t\t.action-buttons button {\n\t\t\twidth: 100%;\n\t\t\tjustify-content: center;\n\t\t}\n\t}\n\t\n\t/* High contrast mode */\n\t@media (prefers-contrast: high) {\n\t\t.connection-item,\n\t\t.test-item,\n\t\t.message-item {\n\t\t\tborder: 2px solid currentColor;\n\t\t}\n\t}\n\t\n\t/* Reduced motion */\n\t@media (prefers-reduced-motion: reduce) {\n\t\t.animate-slide-down {\n\t\t\tanimation: none;\n\t\t}\n\t\t\n\t\t.action-buttons button {\n\t\t\ttransition: none;\n\t\t}\n\t}\n\t\n\t/* Focus management */\n\t.section-header:focus-visible,\n\t.action-buttons button:focus-visible {\n\t\toutline: 2px solid #E31E24;\n\t\toutline-offset: 2px;\n\t}\n</style>"
+<script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+	import { 
+		connectionStatusStore, 
+		protocolMessagesStore,
+		isWebSocketConnected,
+		isCameraConnected,
+		isFullyConnected,
+		connectionQuality,
+		hasConnectionErrors,
+		runDiagnostics,
+		exportDiagnosticData,
+		clearMessageHistory,
+		setDebugMode,
+		type ConnectionStatus,
+		type ProtocolMessage,
+		type DiagnosticTest
+	} from '$lib/utils/connectionDiagnostics';
+	import { screenInfo } from '$lib/utils/responsiveLayout';
+	import { triggerHaptic } from '$lib/utils/touchInteractions';
+	import { showSuccess, showError } from '$lib/utils/errorManager';
+	
+	// Props
+	export let compact = false;
+	export let showProtocolMessages = false;
+	export let showDiagnostics = false;
+	export let className = '';
+	
+	// Component state
+	let status: ConnectionStatus;
+	let protocolMessages: ProtocolMessage[] = [];
+	let diagnosticTests: DiagnosticTest[] = [];
+	let isRunningDiagnostics = false;
+	let debugMode = false;
+	let expandedSections: Set<string> = new Set();
+	
+	// Reactive subscriptions
+	$: currentScreenInfo = $screenInfo;
+	$: isCompact = compact || currentScreenInfo.deviceType === 'phone';
+	$: wsConnected = $isWebSocketConnected;
+	$: cameraConnected = $isCameraConnected;
+	$: fullyConnected = $isFullyConnected;
+	$: quality = $connectionQuality;
+	$: hasErrors = $hasConnectionErrors;
+	
+	// Subscribe to stores
+	const unsubscribeStatus = connectionStatusStore.subscribe(s => status = s);
+	const unsubscribeMessages = protocolMessagesStore.subscribe(m => protocolMessages = m);
+	
+	onMount(() => {
+		// Refresh data
+		connectionStatusStore.refresh();
+		protocolMessagesStore.refresh(50);
+	});
+	
+	onDestroy(() => {
+		unsubscribeStatus();
+		unsubscribeMessages();
+	});
+	
+	function getStatusIcon(connectionStatus: string): string {
+		switch (connectionStatus) {
+			case 'connected':
+				return '🟢';
+			case 'connecting':
+			case 'reconnecting':
+				return '🟡';
+			case 'disconnected':
+				return '🔴';
+			case 'error':
+				return '❌';
+			default:
+				return '⚪';
+		}
+	}
+	
+	function getQualityIcon(quality: string): string {
+		switch (quality) {
+			case 'excellent':
+				return '📶';
+			case 'good':
+				return '📶';
+			case 'fair':
+				return '📶';
+			case 'poor':
+				return '📶';
+			default:
+				return '❓';
+		}
+	}
+	
+	function getQualityColor(quality: string): string {
+		switch (quality) {
+			case 'excellent':
+				return 'text-green-400';
+			case 'good':
+				return 'text-green-300';
+			case 'fair':
+				return 'text-yellow-400';
+			case 'poor':
+				return 'text-red-400';
+			default:
+				return 'text-gray-400';
+		}
+	}
+	
+	function formatLatency(latency?: number): string {
+		if (latency === undefined) return 'N/A';
+		return `${Math.round(latency)}ms`;
+	}
+	
+	function formatUptime(seconds: number): string {
+		if (seconds < 60) return `${Math.round(seconds)}s`;
+		if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+		return `${Math.round(seconds / 3600)}h`;
+	}
+	
+	function formatTimestamp(timestamp: number): string {
+		return new Date(timestamp).toLocaleTimeString();
+	}
+	
+	function formatDataSize(bytes: number): string {
+		if (bytes < 1024) return `${bytes}B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+		return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+	}
+	
+	function toggleSection(sectionId: string) {
+		if (expandedSections.has(sectionId)) {
+			expandedSections.delete(sectionId);
+		} else {
+			expandedSections.add(sectionId);
+		}
+		expandedSections = new Set(expandedSections);
+	}
+	
+	async function handleRunDiagnostics() {
+		triggerHaptic({ type: 'medium' });
+		isRunningDiagnostics = true;
+		
+		try {
+			diagnosticTests = await runDiagnostics();
+			showSuccess('Diagnostics Complete', 'Connection diagnostics completed successfully');
+		} catch (error) {
+			showError('Diagnostics Failed', 'Failed to run connection diagnostics');
+			console.error('Diagnostics failed:', error);
+		} finally {
+			isRunningDiagnostics = false;
+		}
+	}
+	
+	function handleExportDiagnostics() {
+		triggerHaptic({ type: 'light' });
+		
+		try {
+			const diagnosticData = exportDiagnosticData();
+			
+			// Create and download file
+			const blob = new Blob([diagnosticData], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `camera-diagnostics-${new Date().toISOString().slice(0, 19)}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
+			
+			showSuccess('Export Complete', 'Diagnostic data exported successfully');
+		} catch (error) {
+			showError('Export Failed', 'Failed to export diagnostic data');
+			console.error('Export failed:', error);
+		}
+	}
+	
+	function handleClearMessages() {
+		triggerHaptic({ type: 'light' });
+		clearMessageHistory();
+		protocolMessagesStore.refresh();
+		showSuccess('Messages Cleared', 'Protocol message history cleared');
+	}
+	
+	function handleToggleDebug() {
+		debugMode = !debugMode;
+		setDebugMode(debugMode);
+		triggerHaptic({ type: 'selection' });
+		showSuccess(
+			'Debug Mode',
+			`Debug mode ${debugMode ? 'enabled' : 'disabled'}`
+		);
+	}
+	
+	function getMessageTypeColor(type: string): string {
+		switch (type) {
+			case 'websocket':
+				return 'text-blue-400';
+			case 'cap':
+				return 'text-purple-400';
+			default:
+				return 'text-gray-400';
+		}
+	}
+	
+	function getDirectionIcon(direction: string): string {
+		return direction === 'sent' ? '↗️' : '↙️';
+	}
+	
+	function getTestStatusIcon(status: string): string {
+		switch (status) {
+			case 'passed':
+				return '✅';
+			case 'failed':
+				return '❌';
+			case 'running':
+				return '⏳';
+			case 'skipped':
+				return '⏭️';
+			default:
+				return '⏸️';
+		}
+	}
+</script>
+
+<div class="connection-status-display {className}" class:compact={isCompact}>
+	<!-- Main Status Overview -->
+	<div class="status-overview bg-arri-gray rounded-lg p-4 mb-4">
+		<div class="flex items-center justify-between mb-3">
+			<h3 class="text-responsive-lg font-semibold text-white">
+				Connection Status
+			</h3>
+			<div class="status-indicators flex gap-2">
+				<span class="quality-indicator {getQualityColor(quality)}" title="Connection Quality: {quality}">
+					{getQualityIcon(quality)}
+				</span>
+				{#if hasErrors}
+					<span class="error-indicator text-red-400" title="Connection Errors">
+						⚠️
+					</span>
+				{/if}
+			</div>
+		</div>
+		
+		<div class="connection-grid grid {isCompact ? 'grid-cols-1' : 'grid-cols-2'} gap-4">
+			<!-- WebSocket Status -->
+			<div class="connection-item">
+				<div class="flex items-center gap-2 mb-2">
+					<span class="status-icon text-lg">
+						{getStatusIcon(status?.websocket?.status || 'disconnected')}
+					</span>
+					<span class="connection-label text-responsive-sm font-medium text-white">
+						WebSocket
+					</span>
+				</div>
+				<div class="connection-details text-xs text-gray-400">
+					<div>Status: {status?.websocket?.status || 'unknown'}</div>
+					<div>Latency: {formatLatency(status?.websocket?.latency)}</div>
+					{#if status?.websocket?.reconnectAttempts > 0}
+						<div class="text-yellow-400">
+							Retries: {status.websocket.reconnectAttempts}/{status.websocket.maxReconnectAttempts}
+						</div>
+					{/if}
+				</div>
+			</div>
+			
+			<!-- Camera Status -->
+			<div class="connection-item">
+				<div class="flex items-center gap-2 mb-2">
+					<span class="status-icon text-lg">
+						{getStatusIcon(status?.camera?.status || 'disconnected')}
+					</span>
+					<span class="connection-label text-responsive-sm font-medium text-white">
+						Camera
+					</span>
+				</div>
+				<div class="connection-details text-xs text-gray-400">
+					<div>Status: {status?.camera?.status || 'unknown'}</div>
+					<div>Latency: {formatLatency(status?.camera?.latency)}</div>
+					{#if status?.camera?.reconnectAttempts > 0}
+						<div class="text-yellow-400">
+							Retries: {status.camera.reconnectAttempts}/{status.camera.maxReconnectAttempts}
+						</div>
+					{/if}
+				</div>
+			</div>
+		</div>
+		
+		<!-- Network Info -->
+		{#if status?.network && !isCompact}
+			<div class="network-info mt-4 pt-3 border-t border-gray-600">
+				<div class="flex items-center gap-2 mb-2">
+					<span class="text-sm font-medium text-white">Network</span>
+					<span class="{status.network.online ? 'text-green-400' : 'text-red-400'}">
+						{status.network.online ? '🌐' : '📵'}
+					</span>
+				</div>
+				<div class="network-details text-xs text-gray-400 grid grid-cols-2 gap-2">
+					{#if status.network.effectiveType}
+						<div>Type: {status.network.effectiveType}</div>
+					{/if}
+					{#if status.network.downlink}
+						<div>Speed: {status.network.downlink}Mbps</div>
+					{/if}
+					{#if status.network.rtt}
+						<div>RTT: {status.network.rtt}ms</div>
+					{/if}
+					{#if status.network.saveData}
+						<div class="text-yellow-400">Data Saver: On</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
+	</div>
+	
+	<!-- Action Buttons -->
+	<div class="action-buttons flex flex-wrap gap-2 mb-4">
+		<button
+			class="btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch"
+			on:click={handleRunDiagnostics}
+			disabled={isRunningDiagnostics}
+		>
+			{#if isRunningDiagnostics}
+				⏳ Running...
+			{:else}
+				🔍 Run Diagnostics
+			{/if}
+		</button>
+		
+		<button
+			class="btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch"
+			on:click={handleExportDiagnostics}
+		>
+			📄 Export Data
+		</button>
+		
+		<button
+			class="btn-secondary text-xs px-3 py-2 rounded transition-colors min-h-touch"
+			on:click={handleToggleDebug}
+			class:active={debugMode}
+		>
+			🐛 Debug {debugMode ? 'On' : 'Off'}
+		</button>
+	</div>
+</div>
+
+<style>
+	.connection-status-display {
+		/* Ensure proper spacing */
+		width: 100%;
+	}
+	
+	.connection-item {
+		/* Ensure proper layout */
+		min-height: 60px;
+	}
+	
+	.section-header {
+		/* Ensure proper touch targets */
+		min-height: 32px;
+		touch-action: manipulation;
+	}
+	
+	.action-buttons button {
+		/* Ensure proper touch targets */
+		min-height: 32px;
+		touch-action: manipulation;
+	}
+	
+	.action-buttons button.active {
+		background-color: #E31E24;
+		color: white;
+	}
+	
+	/* Responsive adjustments */
+	@media (max-width: 767px) {
+		.connection-status-display.compact {
+			padding: 0.5rem;
+		}
+		
+		.action-buttons {
+			flex-direction: column;
+		}
+		
+		.action-buttons button {
+			width: 100%;
+			justify-content: center;
+		}
+	}
+	
+	/* Focus management */
+	.section-header:focus-visible,
+	.action-buttons button:focus-visible {
+		outline: 2px solid #E31E24;
+		outline-offset: 2px;
+	}
+</style>

@@ -7,14 +7,21 @@
 	import NDFilterControl from '$lib/components/NDFilterControl.svelte';
 	import FrameLinesControl from '$lib/components/FrameLinesControl.svelte';
 	import LUTControl from '$lib/components/LUTControl.svelte';
-	import { cameraStore, connectionStore, notificationStore } from '$lib/stores';
-	import { cameraApi } from '$lib/api/cameraApi';
+	import { safeStoreAccess } from '$lib/dev/mockStores';
+	
+	// Safe store access with fallbacks
+	const { cameraStore, connectionStore, notificationStore, isUsingMocks } = safeStoreAccess();
 	
 	// Reactive store subscriptions
 	$: cameraState = $cameraStore;
 	$: connectionStatus = $connectionStore.overallStatus;
-	$: isConnected = $connectionStatus.fullyConnected;
-	$: isLoading = $cameraStore.operations.loading;
+	$: isConnected = connectionStatus.fullyConnected;
+	$: isLoading = cameraState.operations.loading;
+	
+	// Show dev mode indicator
+	$: if (isUsingMocks) {
+		console.log('Camera page: Using mock stores for UI testing');
+	}
 	
 	onMount(() => {
 		console.log('Camera settings page initialized');
@@ -34,32 +41,32 @@
 		<div class="settings-grid">
 			<!-- Frame Rate Control -->
 			<div class="setting-card">
-				<FrameRateControl disabled={!isConnected || $isLoading} />
+				<FrameRateControl disabled={!isConnected || isLoading} />
 			</div>
 			
 			<!-- White Balance Control -->
 			<div class="setting-card">
-				<WhiteBalanceControl disabled={!isConnected || $isLoading} />
+				<WhiteBalanceControl disabled={!isConnected || isLoading} />
 			</div>
 			
 			<!-- ISO Control -->
 			<div class="setting-card">
-				<ISOControl disabled={!isConnected || $isLoading} />
+				<ISOControl disabled={!isConnected || isLoading} />
 			</div>
 			
 			<!-- ND Filter Control -->
 			<div class="setting-card">
-				<NDFilterControl disabled={!isConnected || $isLoading} />
+				<NDFilterControl disabled={!isConnected || isLoading} />
 			</div>
 			
 			<!-- Frame Lines Control -->
 			<div class="setting-card">
-				<FrameLinesControl disabled={!isConnected || $isLoading} />
+				<FrameLinesControl disabled={!isConnected || isLoading} />
 			</div>
 			
 			<!-- LUT Control -->
 			<div class="setting-card">
-				<LUTControl disabled={!isConnected || $isLoading} />
+				<LUTControl disabled={!isConnected || isLoading} />
 			</div>
 		</div>
 	{:else}

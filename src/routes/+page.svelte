@@ -4,11 +4,21 @@
 	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 	import ResponsiveContainer from '$lib/components/ResponsiveContainer.svelte';
 	import ResponsiveGrid from '$lib/components/ResponsiveGrid.svelte';
-	import { cameraApi } from '$lib/api/cameraApi';
-	import { connectionManager } from '$lib/services/connectionManager';
+	// Simplified imports for UI testing
 	import { screenInfo, type ScreenInfo } from '$lib/utils/responsiveLayout';
-	import type { CameraState } from '$lib/api/cameraApi';
-	import type { ConnectionStatus as SocketConnectionStatus } from '$lib/websocket/socketClient';
+	
+	// Mock types for UI testing
+	interface CameraState {
+		connected: boolean;
+		model?: string;
+		serialNumber?: string;
+	}
+	
+	interface SocketConnectionStatus {
+		connected: boolean;
+		connecting: boolean;
+		error?: string;
+	}
 	
 	// Props from layout
 	export let currentScreenInfo: ScreenInfo;
@@ -74,17 +84,23 @@
 	$: gridMinWidth = isCompact ? '280px' : '300px';
 	
 	onMount(() => {
-		console.log('ARRI Camera Control App initialized');
+		console.log('ARRI Camera Control App initialized - UI Testing Mode');
 		
-		// Subscribe to camera state
-		unsubscribeCamera = cameraApi.cameraState.subscribe((state) => {
-			cameraState = state;
-		});
+		// Mock camera state for UI testing - set to connected so controls work
+		cameraState = {
+			connected: true,
+			model: 'ARRI ALEXA Mini LF (Mock)',
+			serialNumber: 'ALF001234'
+		};
 		
-		// Subscribe to connection status
-		unsubscribeConnection = cameraApi.connectionStatus.subscribe((status) => {
-			connectionStatus = status;
-		});
+		// Mock connection status for UI testing - set to connected so controls work
+		connectionStatus = {
+			connected: true,
+			connecting: false,
+			error: undefined
+		};
+		
+		console.log('Mock data initialized for UI testing');
 	});
 	
 	onDestroy(() => {
@@ -101,9 +117,18 @@
 
 <ResponsiveContainer size="lg" padding="lg" className="home-container">
 	<header class="app-header">
-		<div class="logo-section">
-			<h1 class="app-title text-responsive-2xl">ARRI Camera Control</h1>
-			<p class="app-subtitle text-responsive-sm">Professional camera control via CAP protocol</p>
+		<div class="header-content">
+			<div class="logo-section">
+				<h1 class="app-title text-responsive-2xl">ARRI Camera Control</h1>
+				<p class="app-subtitle text-responsive-sm">Professional camera control via CAP protocol</p>
+			</div>
+			<button
+				class="settings-button"
+				on:click={() => navigateTo('/settings')}
+				aria-label="Settings"
+			>
+				⚙️
+			</button>
 		</div>
 	</header>
 
@@ -145,9 +170,15 @@
 			<div class="connection-prompt">
 				<div class="text-center text-gray-400">
 					<div class="text-responsive-2xl mb-2">📡</div>
-					<p class="text-responsive-sm">
+					<p class="text-responsive-sm mb-4">
 						Connect to an ARRI camera to access all features
 					</p>
+					<button
+						class="connect-button bg-arri-red hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+						on:click={() => navigateTo('/settings')}
+					>
+						⚙️ Camera Settings
+					</button>
 				</div>
 			</div>
 		{/if}
@@ -160,11 +191,21 @@
 	}
 	
 	.app-header {
-		@apply text-center spacing-responsive-lg;
+		@apply p-4 tablet:p-6;
+	}
+	
+	.header-content {
+		@apply flex items-center justify-between max-w-4xl mx-auto;
 	}
 	
 	.logo-section {
-		@apply max-w-md mx-auto;
+		@apply text-center flex-1;
+	}
+	
+	.settings-button {
+		@apply text-2xl p-2 rounded-lg transition-colors min-h-touch min-w-touch;
+		@apply text-gray-400 hover:text-white hover:bg-gray-700;
+		@apply focus:outline-none focus:ring-2 focus:ring-arri-red focus:ring-opacity-50;
 	}
 	
 	.app-title {
@@ -209,7 +250,7 @@
 	}
 	
 	.action-content {
-		@apply relative flex items-center gap-4 spacing-responsive-md;
+		@apply relative flex items-center gap-4 p-3 tablet:p-4;
 		@apply h-full;
 	}
 	
@@ -235,8 +276,14 @@
 	}
 	
 	.connection-prompt {
-		@apply bg-arri-gray rounded-lg spacing-responsive-lg;
+		@apply bg-arri-gray rounded-lg p-4 tablet:p-6;
 		@apply animate-fade-in;
+	}
+	
+	.connect-button {
+		@apply min-h-touch touch-manipulation;
+		@apply focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50;
+		@apply active:scale-95 transition-transform;
 	}
 	
 	/* Responsive adjustments */
