@@ -137,3 +137,7 @@
 {"level":"error","message":"Socket error: ","service":"arri-camera-control","timestamp":"2025-08-08T14:35:41.532Z"}
 {"level":"error","message":"Socket error: getaddrinfo ENOTFOUND 192.168.1.999","service":"arri-camera-control","timestamp":"2025-08-08T14:36:11.475Z"}
 {"level":"error","message":"Socket error: ","service":"arri-camera-control","timestamp":"2025-08-08T14:36:11.540Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200353_fh14i27m8 (Message timeout)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:01.353Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200358_1qp120kuc (Invalid command)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.358Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200359_cv51tvlks (Not connected to camera)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.359Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200363_q4ulcrjtb (Test error)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.363Z"}

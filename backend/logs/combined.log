@@ -1194,3 +1194,30 @@
 {"level":"info","message":"Server initialization complete","service":"arri-camera-control","timestamp":"2025-08-12T19:17:09.599Z"}
 {"environment":"development","frontendUrl":"http://localhost:5173","level":"info","message":"ARRI Camera Control Server started","port":3001,"service":"arri-camera-control","timestamp":"2025-08-16T10:55:37.631Z"}
 {"level":"info","message":"Server initialization complete","service":"arri-camera-control","timestamp":"2025-08-16T10:55:37.633Z"}
+{"level":"info","message":"Attempting connection to 192.168.1.100:7777 (attempt 1)","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.604Z"}
+{"level":"info","message":"CAP connection established successfully","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.604Z"}
+{"level":"info","message":"Attempting connection to 192.168.1.100:7777 (attempt 1)","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.611Z"}
+{"level":"info","message":"Disconnecting from camera","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.614Z"}
+{"level":"info","message":"Scheduling reconnection attempt 3 in 4000ms","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.615Z"}
+{"level":"info","message":"Scheduling reconnection attempt 1 in 2000ms","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.616Z"}
+{"level":"warn","message":"Keep-alive failed, connection may be lost","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.617Z"}
+{"level":"info","message":"CAP connection established successfully","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.618Z"}
+{"level":"warn","message":"CAP connection lost","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.619Z"}
+{"level":"info","message":"Connection metrics reset","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.620Z"}
+{"healthCheckTimeout":15000,"level":"info","maxReconnectAttempts":10,"message":"Connection manager configured","reconnectDelay":5000,"service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.620Z"}
+{"level":"info","message":"CAP connection established successfully","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.623Z"}
+{"level":"warn","message":"CAP connection lost","service":"arri-camera-control","timestamp":"2026-03-23T08:39:37.623Z"}
+{"level":"info","message":"Command queue configured: maxRetries=3, retryDelay=1000, maxQueueSize=2","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.349Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200352_kbn5j4o5v (Message timeout), retry 1/3","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.352Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200353_fh14i27m8 (Message timeout), retry 1/2","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.353Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200353_fh14i27m8 (Message timeout), retry 2/2","service":"arri-camera-control","timestamp":"2026-03-23T08:40:01.353Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200353_fh14i27m8 (Message timeout)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:01.353Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200358_1qp120kuc (Invalid command), retry 1/3","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.358Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200358_1qp120kuc (Invalid command)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.358Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200359_cv51tvlks (Not connected to camera), retry 1/3","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.359Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200359_cv51tvlks (Not connected to camera)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.359Z"}
+{"level":"info","message":"Command queue configured: maxRetries=5, retryDelay=2000, maxQueueSize=50","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.361Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200363_q4ulcrjtb (Test error), retry 1/3","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.363Z"}
+{"level":"error","message":"Command failed permanently: cmd_1774255200363_q4ulcrjtb (Test error)","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.363Z"}
+{"level":"warn","message":"Command failed: cmd_1774255200363_hfdb40apv (Message timeout), retry 1/3","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.363Z"}
+{"level":"info","message":"Cleared 1 pending commands","service":"arri-camera-control","timestamp":"2026-03-23T08:40:00.364Z"}

@@ -188,8 +188,6 @@
 \t\tmin-height: 44px;
 \t\t
 \t\t/* Improve focus visibility */
-\t\tfocus-visible:outline: 2px solid #E31E24;
-\t\tfocus-visible:outline-offset: 2px;
 \t}
 \t
 \t/* App-specific styles */
