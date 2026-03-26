@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "ARRICameraControl",
     platforms: [
-        .iOS(.v18),
+        .iOS(.v26),
         .macOS(.v14)
     ],
     products: [

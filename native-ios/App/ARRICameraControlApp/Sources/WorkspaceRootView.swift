@@ -92,7 +92,7 @@ private struct DisconnectedWorkspacePlaceholder: View {
                 .font(.system(size: 44, weight: .light))
                 .foregroundStyle(.secondary)
             Text("Choose a Camera")
-                .font(.system(.largeTitle, design: .rounded, weight: .semibold))
+                .font(.system(size: 34, weight: .semibold, design: .rounded))
             Text("Discovery runs automatically. Pick an LF or 35 from the sidebar to open the operator workspace.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -111,7 +111,7 @@ private struct WorkspaceHero: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(store.activeCamera?.displayName ?? "No Camera Connected")
-                        .font(.system(.largeTitle, design: .rounded, weight: .semibold))
+                        .font(.system(size: 34, weight: .semibold, design: .rounded))
                     Text(store.selectedSection.subtitle)
                         .font(.title3)
                         .foregroundStyle(.secondary)
@@ -407,7 +407,7 @@ private struct TimecodeWorkspacePanel: View {
                 VStack(alignment: .leading, spacing: 14) {
                     TextField("HH:MM:SS:FF", text: $draft)
                         .textFieldStyle(.roundedBorder)
-                        .font(.system(.title3, design: .monospaced))
+                        .font(.system(size: 20, weight: .regular, design: .monospaced))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
 
@@ -494,7 +494,8 @@ private struct DiagnosticsWorkspacePanel: View {
                         .foregroundStyle(.secondary)
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
-                        ForEach(Array(store.diagnosticEvents.suffix(8).reversed().enumerated()), id: \.offset) { _, event in
+                        ForEach(Array(store.diagnosticEvents.suffix(8).reversed().enumerated()), id: \.offset) { entry in
+                            let event = entry.element
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(event.severity.rawValue.uppercased())
                                     .font(.caption.weight(.semibold))
@@ -580,7 +581,17 @@ private struct MetricPill: View {
 private struct WorkspaceCard<Content: View>: View {
     let title: String
     let subtitle: String
-    @ViewBuilder let content: Content
+    let content: Content
+
+    init(
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.content = content()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -603,7 +614,17 @@ private struct WorkspaceCard<Content: View>: View {
 private struct SelectionMenuRow<MenuContent: View>: View {
     let label: String
     let value: String
-    @ViewBuilder let menuContent: MenuContent
+    let menuContent: MenuContent
+
+    init(
+        label: String,
+        value: String,
+        @ViewBuilder menuContent: () -> MenuContent
+    ) {
+        self.label = label
+        self.value = value
+        self.menuContent = menuContent()
+    }
 
     var body: some View {
         Menu {

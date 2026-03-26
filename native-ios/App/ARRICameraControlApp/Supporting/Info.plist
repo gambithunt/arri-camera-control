@@ -39,10 +39,6 @@
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>UIDeviceFamily</key>
-	<array>
-		<integer>2</integer>
-	</array>
 	<key>UIRequiresFullScreen</key>
 	<false/>
 	<key>UISupportedInterfaceOrientations~ipad</key>
