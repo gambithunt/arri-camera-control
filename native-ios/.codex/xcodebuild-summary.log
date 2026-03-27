@@ -1,0 +1,3 @@
+swift test: PASS
+xcodebuild exit code: 0
+xcodebuild result: BUILD SUCCEEDED

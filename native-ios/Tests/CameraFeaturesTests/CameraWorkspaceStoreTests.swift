@@ -46,6 +46,73 @@ import Testing
 }
 
 @MainActor
+@Test func workspaceStoreStartIsIdempotentUntilStopIsCalled() async throws {
+    let session = StubSessionController()
+    let discovery = StubDiscoveryCoordinator()
+    let store = CameraWorkspaceStore(
+        session: session,
+        discovery: discovery,
+        controlService: StubControlService(),
+        playbackService: StubPlaybackService(),
+        timecodeService: StubTimecodeService(),
+        lookService: StubLookService(),
+        frameGrabService: StubFrameGrabService()
+    )
+
+    await store.start()
+    await store.start()
+
+    #expect(await discovery.startCount == 1)
+    #expect(await session.beginDiscoveryCount == 1)
+
+    await store.stop()
+    #expect(await discovery.stopCount == 1)
+    #expect(await session.disconnectCount == 1)
+
+    await store.start()
+    #expect(await discovery.startCount == 2)
+    #expect(await session.beginDiscoveryCount == 2)
+
+    await store.stop()
+}
+
+@MainActor
+@Test func workspaceStoreStopResetsOperatorAvailabilityToIdle() async throws {
+    let session = StubSessionController()
+    let discovery = StubDiscoveryCoordinator()
+    let store = CameraWorkspaceStore(
+        session: session,
+        discovery: discovery,
+        controlService: StubControlService(),
+        playbackService: StubPlaybackService(),
+        timecodeService: StubTimecodeService(),
+        lookService: StubLookService(),
+        frameGrabService: StubFrameGrabService()
+    )
+    let descriptor = CameraDescriptor(
+        identifier: CameraIdentifier("camera-stop"),
+        displayName: "ARRI ALEXA LF",
+        family: .alexaLF,
+        endpoint: CameraEndpoint(host: "10.0.0.26", port: 7777),
+        discoverySource: .bonjour
+    )
+
+    await store.start()
+    await session.emitState(.connected(descriptor))
+    try await Task.sleep(for: .milliseconds(20))
+
+    #expect(store.sessionState == .connected(descriptor))
+    #expect(store.canRunOperatorCommands == true)
+
+    await store.stop()
+
+    #expect(store.sessionState == .idle)
+    #expect(store.liveState.connectionState == .idle)
+    #expect(store.canRunOperatorCommands == false)
+    #expect(store.canConnectToDiscoveredCamera == true)
+}
+
+@MainActor
 @Test func workspaceStoreRunsOperatorWorkflowsAndBuildsDiagnostics() async throws {
     let session = StubSessionController()
     let discovery = StubDiscoveryCoordinator()
@@ -76,6 +143,7 @@ import Testing
     let jammedTimecode = try #require(Timecode(hours: 1, minutes: 2, seconds: 3, frames: 4))
 
     await store.start()
+    #expect(store.canSaveFrameGrabToPhotoLibrary == false)
     await store.setFrameRate(frameRate)
     await store.setWhiteBalance(whiteBalance)
     await store.setExposureIndex(exposureIndex)
@@ -92,6 +160,7 @@ import Testing
     await store.setTimecode(jammedTimecode, frameRate: frameRate)
     await store.applyLook(named: "Show LUT")
     await store.captureFrameGrab()
+    #expect(store.canSaveFrameGrabToPhotoLibrary)
     await store.saveFrameGrabToPhotoLibrary()
 
     #expect(await control.frameRates == [frameRate])
@@ -125,12 +194,112 @@ import Testing
     await store.stop()
 }
 
+@MainActor
+@Test func workspaceStoreRequiresCapturedFrameGrabAndExporterBeforeSaving() async throws {
+    let store = CameraWorkspaceStore(
+        session: StubSessionController(),
+        discovery: StubDiscoveryCoordinator(),
+        controlService: StubControlService(),
+        playbackService: StubPlaybackService(),
+        timecodeService: StubTimecodeService(),
+        lookService: StubLookService(),
+        frameGrabService: StubFrameGrabService()
+    )
+
+    await store.start()
+
+    #expect(store.canSaveFrameGrabToPhotoLibrary == false)
+
+    await store.saveFrameGrabToPhotoLibrary()
+    #expect(store.lastError == String(describing: FrameGrabExportError.missingFrameGrab))
+
+    await store.captureFrameGrab()
+    #expect(store.frameGrabData == Data([0xFF, 0xD8, 0xFF]))
+    #expect(store.canSaveFrameGrabToPhotoLibrary == false)
+
+    await store.saveFrameGrabToPhotoLibrary()
+    #expect(store.lastError == String(describing: FrameGrabExportError.exporterUnavailable))
+
+    await store.stop()
+}
+
+@MainActor
+@Test func workspaceStoreSurfacesConnectionHealthAndOperatorAvailability() async throws {
+    let session = StubSessionController()
+    let store = CameraWorkspaceStore(
+        session: session,
+        discovery: StubDiscoveryCoordinator(),
+        controlService: StubControlService(),
+        playbackService: StubPlaybackService(),
+        timecodeService: StubTimecodeService(),
+        lookService: StubLookService(),
+        frameGrabService: StubFrameGrabService()
+    )
+    let descriptor = CameraDescriptor(
+        identifier: CameraIdentifier("camera-health"),
+        displayName: "ARRI ALEXA 35",
+        family: .alexa35,
+        endpoint: CameraEndpoint(host: "10.0.0.25", port: 7777),
+        discoverySource: .bonjour
+    )
+
+    await store.start()
+
+    await session.emitState(.connecting(descriptor))
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(store.canConnectToDiscoveredCamera == false)
+    #expect(store.canRunOperatorCommands == false)
+    #expect(store.connectionBanner == WorkspaceConnectionBanner(
+        title: "Connecting to ARRI ALEXA 35",
+        message: "Opening a direct CAP control session with the camera.",
+        tone: .neutral
+    ))
+
+    await session.emitState(.degraded(camera: descriptor, reason: "eventStreamStale"))
+    await session.emitHealth(CameraSessionHealth(lastKeepaliveAt: Date(timeIntervalSince1970: 1_234), lastKeepaliveLatencyMS: 42, consecutiveKeepaliveFailures: 1))
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(store.canConnectToDiscoveredCamera == false)
+    #expect(store.canRunOperatorCommands == true)
+    #expect(store.sessionHealth.lastKeepaliveLatencyMS == 42)
+    #expect(store.sessionHealth.consecutiveKeepaliveFailures == 1)
+    #expect(store.connectionBanner == WorkspaceConnectionBanner(
+        title: "ARRI ALEXA 35 Connection is Stale",
+        message: "Live telemetry is stale. Commands remain enabled, but confirm response on camera until event updates recover.",
+        tone: .caution
+    ))
+
+    await session.emitState(.failed(camera: descriptor, reason: "linkDown"))
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(store.canConnectToDiscoveredCamera == true)
+    #expect(store.canRunOperatorCommands == false)
+    #expect(store.connectionBanner == WorkspaceConnectionBanner(
+        title: "Connection Failed for ARRI ALEXA 35",
+        message: "The control session failed: linkDown",
+        tone: .critical
+    ))
+
+    await session.emitState(.connected(descriptor))
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(store.canConnectToDiscoveredCamera == false)
+    #expect(store.canRunOperatorCommands == true)
+    #expect(store.connectionBanner == nil)
+
+    await store.stop()
+}
+
 private actor StubSessionController: CameraSessionControlling {
     private var stateContinuations: [UUID: AsyncStream<CameraSessionState>.Continuation] = [:]
+    private var healthContinuations: [UUID: AsyncStream<CameraSessionHealth>.Continuation] = [:]
     private var variableContinuations: [UUID: AsyncStream<CAPVariableUpdate>.Continuation] = [:]
+    private(set) var beginDiscoveryCount = 0
+    private(set) var disconnectCount = 0
 
     func currentState() async -> CameraSessionState {
         .idle
+    }
+
+    func currentHealth() async -> CameraSessionHealth {
+        CameraSessionHealth()
     }
 
     func stateUpdates() async -> AsyncStream<CameraSessionState> {
@@ -140,6 +309,19 @@ private actor StubSessionController: CameraSessionControlling {
             continuation.onTermination = { @Sendable _ in
                 Task {
                     await self.removeStateContinuation(id: id)
+                }
+            }
+        }
+    }
+
+    func healthUpdates() async -> AsyncStream<CameraSessionHealth> {
+        AsyncStream { continuation in
+            let id = UUID()
+            healthContinuations[id] = continuation
+            continuation.yield(CameraSessionHealth())
+            continuation.onTermination = { @Sendable _ in
+                Task {
+                    await self.removeHealthContinuation(id: id)
                 }
             }
         }
@@ -157,13 +339,23 @@ private actor StubSessionController: CameraSessionControlling {
         }
     }
 
-    func beginDiscovery() async {}
+    func beginDiscovery() async {
+        beginDiscoveryCount += 1
+    }
     func connect(to descriptor: CameraDescriptor, clientName: String, password: String?) async throws {}
-    func disconnect() async {}
+    func disconnect() async {
+        disconnectCount += 1
+    }
 
     func emitState(_ state: CameraSessionState) {
         for continuation in stateContinuations.values {
             continuation.yield(state)
+        }
+    }
+
+    func emitHealth(_ health: CameraSessionHealth) {
+        for continuation in healthContinuations.values {
+            continuation.yield(health)
         }
     }
 
@@ -177,6 +369,10 @@ private actor StubSessionController: CameraSessionControlling {
         stateContinuations.removeValue(forKey: id)
     }
 
+    private func removeHealthContinuation(id: UUID) {
+        healthContinuations.removeValue(forKey: id)
+    }
+
     private func removeVariableContinuation(id: UUID) {
         variableContinuations.removeValue(forKey: id)
     }
@@ -184,9 +380,15 @@ private actor StubSessionController: CameraSessionControlling {
 
 private actor StubDiscoveryCoordinator: CameraDiscoveryCoordinating {
     private var continuations: [UUID: AsyncStream<[DiscoveryCandidate]>.Continuation] = [:]
+    private(set) var startCount = 0
+    private(set) var stopCount = 0
 
-    func start() async {}
-    func stop() async {}
+    func start() async {
+        startCount += 1
+    }
+    func stop() async {
+        stopCount += 1
+    }
     func candidates() async -> [DiscoveryCandidate] { [] }
 
     func updates() async -> AsyncStream<[DiscoveryCandidate]> {

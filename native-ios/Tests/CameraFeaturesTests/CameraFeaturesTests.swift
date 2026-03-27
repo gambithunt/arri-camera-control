@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import CameraFeatures
+@testable import CameraDiagnostics
 @testable import CameraDomain
 @testable import ARRICAPKit
 
@@ -39,6 +40,38 @@ import Testing
     #expect(state.timecodeRunMode == .freeRun)
     #expect(state.lookName == "Show LUT")
     #expect(state.playbackClipIndex == 7)
+}
+
+@Test func stateReducerMapsLensClipAndCodecMetadata() {
+    let reducer = CameraStateReducer()
+    var state = CameraLiveState()
+
+    var codecListPayload = CAPDataCodec.encodeUInt16(2)
+    codecListPayload.append(CAPDataCodec.encodeUInt16(2))
+    codecListPayload.append(CAPDataCodec.encodeString("ProRes 4444 XQ"))
+    codecListPayload.append(CAPDataCodec.encodeUInt32(0x0000_0001))
+    codecListPayload.append(CAPDataCodec.encodeString("ARRIRAW"))
+    codecListPayload.append(CAPDataCodec.encodeUInt32(0x0000_0002))
+
+    state = reducer.apply(.init(variableID: .codecList, value: .opaque(codecListPayload)), to: state)
+    state = reducer.apply(.init(variableID: .codec, value: .uInt16(1)), to: state)
+    state = reducer.apply(.init(variableID: .currentReel, value: .uInt16(3)), to: state)
+    state = reducer.apply(.init(variableID: .clipNumber, value: .uInt16(14)), to: state)
+    state = reducer.apply(.init(variableID: .remainingRecTime, value: .uInt32(4_200)), to: state)
+    state = reducer.apply(.init(variableID: .lensModel, value: .string("Signature Prime 35")), to: state)
+    state = reducer.apply(.init(variableID: .lensIris, value: .int32(2_800)), to: state)
+    state = reducer.apply(.init(variableID: .lensFocalLength, value: .int32(35_000)), to: state)
+    state = reducer.apply(.init(variableID: .texture, value: .string("K445 Default")), to: state)
+
+    #expect(state.codecOptions == ["ProRes 4444 XQ", "ARRIRAW"])
+    #expect(state.codecIndex == 1)
+    #expect(state.currentReel == 3)
+    #expect(state.clipNumber == 14)
+    #expect(state.remainingRecordSeconds == 4_200)
+    #expect(state.lensModel == "Signature Prime 35")
+    #expect(state.lensIrisTStopMillistops == 2_800)
+    #expect(state.lensFocalLengthMillimetersTimesOneThousand == 35_000)
+    #expect(state.textureName == "K445 Default")
 }
 
 @Test func controlServiceMapsOperatorActionsToCAPCommands() async throws {
@@ -86,6 +119,23 @@ import Testing
         .setVariable(.lookFilename, .string("Show LUT")),
         .getFrameGrab
     ])
+}
+
+@Test func servicesEmitTimingDiagnosticsForOperatorCommands() async throws {
+    let client = RecordingCAPClient(replyPayload: Data([0xFF, 0xD8, 0xFF]))
+    let logger = InMemoryDiagnosticLogger()
+    let control = CameraControlService(client: client, diagnosticLogger: logger)
+    let playback = PlaybackControlService(client: client, diagnosticLogger: logger)
+    let frameGrab = FrameGrabService(client: client, diagnosticLogger: logger)
+
+    try await control.startRecording()
+    try await playback.start()
+    _ = try await frameGrab.captureFrameGrab()
+
+    let messages = logger.events.map(\.message)
+    #expect(messages.contains(where: { $0.contains("Command recordStart completed in") }))
+    #expect(messages.contains(where: { $0.contains("Command playbackStart completed in") }))
+    #expect(messages.contains(where: { $0.contains("Command captureFrameGrab completed in") }))
 }
 
 private actor RecordingCAPClient: CAPClientProtocol {

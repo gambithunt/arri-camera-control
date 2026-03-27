@@ -238,6 +238,10 @@ arri-camera-control-ios/
 - Live state subscription, session update streaming, and an observable camera workspace store are implemented.
 - Operator-facing services for core control, playback, timecode, look, frame grab, Photos export, and diagnostics export are implemented.
 - The SwiftUI workspace now uses section-focused operator panels with persistent connection and camera health visibility across control, playback, timecode, look, and diagnostics.
+- The app shell now wires a concrete Photos exporter and baseline accessibility/input-quality improvements for major operator actions.
+- Session reliability now includes idempotent workspace start/stop, explicit event-stream failure detection, bounded reconnect attempts, and tested receive-loop restart behavior.
+- The operator workspace now surfaces explicit connection-health banners, disables unsafe controls during reconnect/auth phases, and resets cleanly to idle on stop/background.
+- The app runtime now enables session keepalive polling, surfaces keepalive health in the operator workspace, and records per-command timing diagnostics for control, playback, timecode, look, and frame-grab actions.
 - Hardware validation and release-readiness documents now define the remaining execution gates for LF and 35 sign-off.
 
 ## Execution Plan

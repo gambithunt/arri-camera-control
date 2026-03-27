@@ -1,0 +1,140 @@
+== swift test ==
+[0/1] Planning build
+Building for debugging...
+[0/6] Write sources
+[4/6] Write swift-version--58304C5D6DBC2206.txt
+[6/8] Compiling CameraSession CameraSession.swift
+[7/8] Emitting module CameraSession
+[8/13] Compiling CameraSessionTests CameraSessionTests.swift
+[9/13] Emitting module CameraSessionTests
+[10/13] Compiling CameraFeatures CameraFeatures.swift
+[11/13] Emitting module CameraFeatures
+[12/16] Compiling CameraFeaturesTests CameraWorkspaceStoreTests.swift
+[13/16] Compiling CameraFeaturesTests CameraFeaturesTests.swift
+[14/16] Emitting module CameraFeaturesTests
+[14/16] Write Objects.LinkFileList
+[15/16] Linking ARRICameraControlPackageTests
+Build complete! (2.36s)
+Test Suite 'All tests' started at 2026-03-27 07:24:30.430.
+Test Suite 'All tests' passed at 2026-03-27 07:24:30.436.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.006) seconds
+􀟈  Test run started.
+􀄵  Testing Library Version: 1743
+􀄵  Target Platform: arm64e-apple-macos14.0
+􀟈  Test clipAndLookMetadataCaptureCoreFields() started.
+􀟈  Test timecodeFormattingRequiresValidRanges() started.
+􀟈  Test cameraOperationAvailabilityFollowsCapabilities() started.
+􀟈  Test workspaceStoreRunsOperatorWorkflowsAndBuildsDiagnostics() started.
+􀟈  Test cameraDescriptorStoresIdentityAndEndpoint() started.
+􀟈  Test whiteBalanceValidationRejectsUnsupportedKelvin() started.
+􀟈  Test playbackTimecodeLookAndFrameGrabServicesMapToExpectedCommands() started.
+􀟈  Test ndFilterProvidesCanonicalStops() started.
+􀟈  Test frameRateValidationRejectsOutOfRangeValues() started.
+􀟈  Test workspaceStoreReflectsDiscoverySessionAndVariableUpdateStreams() started.
+􀟈  Test defaultWorkspaceContainsAllTopLevelSections() started.
+􀟈  Test stateReducerBuildsLiveStateFromVariableUpdates() started.
+􀟈  Test servicesEmitTimingDiagnosticsForOperatorCommands() started.
+􀟈  Test controlServiceMapsOperatorActionsToCAPCommands() started.
+􀟈  Test sessionConnectTransitionsThroughHandshakeStatesAndSubscriptions() started.
+􀟈  Test workspaceStoreStartIsIdempotentUntilStopIsCalled() started.
+􀟈  Test sessionRecoversFromDegradedStateWhenEventsResume() started.
+􀟈  Test mockFactoryProducesLFAnd35Descriptors() started.
+􀟈  Test baselineCapabilitiesCoverLFAnd35() started.
+􀟈  Test loggerStoresRecordedEvents() started.
+􀟈  Test workspaceStoreStopResetsOperatorAvailabilityToIdle() started.
+􀟈  Test stateReducerMapsLookTimecodeModeAndPlaybackClipIndex() started.
+􀟈  Test capFrameRejectsLengthMismatch() started.
+􀟈  Test sessionMovesToFailedStateWhenEventStreamEndsUnexpectedly() started.
+􀟈  Test sessionPublishesVariableUpdatesFromClientEvents() started.
+􀟈  Test scalarCodecsRejectInvalidLengths() started.
+􀟈  Test messageIDSequenceIncrementsAndWrapsToOne() started.
+􀟈  Test workspaceStoreRequiresCapturedFrameGrabAndExporterBeforeSaving() started.
+􀟈  Test capFrameRoundTripsThroughEncodeDecode() started.
+􀟈  Test networkTransportEncodesOutgoingFramesAndDecodesFragmentedIncomingFrames() started.
+􀟈  Test setVariableCommandEncodesVariableIdentifierAndTypedValue() started.
+􀟈  Test sessionMovesToFailedStateWhenHandshakeCommandThrows() started.
+􀟈  Test recordStartCommandUsesCommandWithoutPayload() started.
+􀟈  Test registryPromotesLaterVerifiedCandidateAndKeepsBestDescriptorData() started.
+􀟈  Test clientSendsEncodedCommandAndReturnsMatchingReply() started.
+􀟈  Test sessionReconnectsAfterUnexpectedEventStreamEnd() started.
+􀟈  Test capVerifierBuildsVerifiedDescriptorFromCameraIdentityQueries() started.
+􀟈  Test bonjourDiscoveryVerifiesServicesAndPublishesCandidates() started.
+􀟈  Test sessionFailsWhenReconnectAttemptsAreExhausted() started.
+􀟈  Test commandFramesAreRejectedByIncomingMessageParser() started.
+􀟈  Test getVariableCommandEncodesRequestedVariableIdentifier() started.
+􀟈  Test workspaceStoreSurfacesConnectionHealthAndOperatorAvailability() started.
+􀟈  Test float32RoundTripsThroughCodec() started.
+􀟈  Test requestVariablesCommandEncodesUInt16ArrayPayload() started.
+􀟈  Test discoveryCandidatePreservesVerificationState() started.
+􀟈  Test uint32RoundTripsThroughCodec() started.
+􀟈  Test clientPublishesIncomingEventsWhileStillCorrelatingReplies() started.
+􀟈  Test eventCanDecodeTypedVariableUpdateWhenVariableIsKnown() started.
+􀟈  Test clientNameCommandEncodesUtf8StringPayload() started.
+􀟈  Test clientCanRestartReceiveLoopAfterTransportFailure() started.
+􀟈  Test sessionMovesToDegradedStateWhenEventStreamGoesStale() started.
+􀟈  Test eventFrameParsesIntoEventCodeAndPayload() started.
+􀟈  Test reportBuilderRendersOperatorFriendlyDiagnosticExport() started.
+􀟈  Test capFrameRejectsShortPayload() started.
+􀟈  Test replyFrameParsesIntoResultCodeAndPayload() started.
+􀟈  Test uint16RoundTripsThroughCodec() started.
+􀟈  Test clientThrowsWhenReplyReportsFailure() started.
+􀟈  Test frameStreamDecoderWaitsForCompleteFrameAcrossChunks() started.
+􁁛  Test cameraDescriptorStoresIdentityAndEndpoint() passed after 0.001 seconds.
+􁁛  Test frameRateValidationRejectsOutOfRangeValues() passed after 0.001 seconds.
+􁁛  Test defaultWorkspaceContainsAllTopLevelSections() passed after 0.001 seconds.
+􁁛  Test clipAndLookMetadataCaptureCoreFields() passed after 0.001 seconds.
+􁁛  Test whiteBalanceValidationRejectsUnsupportedKelvin() passed after 0.001 seconds.
+􁁛  Test stateReducerMapsLookTimecodeModeAndPlaybackClipIndex() passed after 0.001 seconds.
+􁁛  Test timecodeFormattingRequiresValidRanges() passed after 0.001 seconds.
+􁁛  Test servicesEmitTimingDiagnosticsForOperatorCommands() passed after 0.001 seconds.
+􁁛  Test loggerStoresRecordedEvents() passed after 0.001 seconds.
+􁁛  Test mockFactoryProducesLFAnd35Descriptors() passed after 0.001 seconds.
+􁁛  Test controlServiceMapsOperatorActionsToCAPCommands() passed after 0.001 seconds.
+􁁛  Test stateReducerBuildsLiveStateFromVariableUpdates() passed after 0.001 seconds.
+􁁛  Test cameraOperationAvailabilityFollowsCapabilities() passed after 0.001 seconds.
+􁁛  Test recordStartCommandUsesCommandWithoutPayload() passed after 0.001 seconds.
+􁁛  Test playbackTimecodeLookAndFrameGrabServicesMapToExpectedCommands() passed after 0.001 seconds.
+􁁛  Test setVariableCommandEncodesVariableIdentifierAndTypedValue() passed after 0.001 seconds.
+􁁛  Test registryPromotesLaterVerifiedCandidateAndKeepsBestDescriptorData() passed after 0.001 seconds.
+􁁛  Test requestVariablesCommandEncodesUInt16ArrayPayload() passed after 0.001 seconds.
+􁁛  Test float32RoundTripsThroughCodec() passed after 0.001 seconds.
+􁁛  Test capFrameRejectsLengthMismatch() passed after 0.001 seconds.
+􁁛  Test baselineCapabilitiesCoverLFAnd35() passed after 0.001 seconds.
+􁁛  Test uint32RoundTripsThroughCodec() passed after 0.001 seconds.
+􁁛  Test getVariableCommandEncodesRequestedVariableIdentifier() passed after 0.001 seconds.
+􁁛  Test ndFilterProvidesCanonicalStops() passed after 0.001 seconds.
+􁁛  Test capFrameRoundTripsThroughEncodeDecode() passed after 0.001 seconds.
+􁁛  Test clientNameCommandEncodesUtf8StringPayload() passed after 0.001 seconds.
+􁁛  Test commandFramesAreRejectedByIncomingMessageParser() passed after 0.001 seconds.
+􁁛  Test discoveryCandidatePreservesVerificationState() passed after 0.001 seconds.
+􁁛  Test messageIDSequenceIncrementsAndWrapsToOne() passed after 0.001 seconds.
+􁁛  Test replyFrameParsesIntoResultCodeAndPayload() passed after 0.001 seconds.
+􁁛  Test eventFrameParsesIntoEventCodeAndPayload() passed after 0.001 seconds.
+􁁛  Test uint16RoundTripsThroughCodec() passed after 0.001 seconds.
+􁁛  Test frameStreamDecoderWaitsForCompleteFrameAcrossChunks() passed after 0.001 seconds.
+􁁛  Test eventCanDecodeTypedVariableUpdateWhenVariableIsKnown() passed after 0.001 seconds.
+􁁛  Test capFrameRejectsShortPayload() passed after 0.001 seconds.
+􁁛  Test networkTransportEncodesOutgoingFramesAndDecodesFragmentedIncomingFrames() passed after 0.001 seconds.
+􁁛  Test bonjourDiscoveryVerifiesServicesAndPublishesCandidates() passed after 0.001 seconds.
+􁁛  Test scalarCodecsRejectInvalidLengths() passed after 0.001 seconds.
+􁁛  Test clientSendsEncodedCommandAndReturnsMatchingReply() passed after 0.001 seconds.
+􁁛  Test sessionConnectTransitionsThroughHandshakeStatesAndSubscriptions() passed after 0.001 seconds.
+􁁛  Test clientThrowsWhenReplyReportsFailure() passed after 0.001 seconds.
+􁁛  Test clientPublishesIncomingEventsWhileStillCorrelatingReplies() passed after 0.001 seconds.
+􁁛  Test sessionPublishesVariableUpdatesFromClientEvents() passed after 0.001 seconds.
+􁁛  Test sessionMovesToFailedStateWhenHandshakeCommandThrows() passed after 0.001 seconds.
+􁁛  Test capVerifierBuildsVerifiedDescriptorFromCameraIdentityQueries() passed after 0.003 seconds.
+􁁛  Test reportBuilderRendersOperatorFriendlyDiagnosticExport() passed after 0.010 seconds.
+􁁛  Test workspaceStoreRequiresCapturedFrameGrabAndExporterBeforeSaving() passed after 0.010 seconds.
+􁁛  Test workspaceStoreStartIsIdempotentUntilStopIsCalled() passed after 0.010 seconds.
+􁁛  Test workspaceStoreRunsOperatorWorkflowsAndBuildsDiagnostics() passed after 0.011 seconds.
+􁁛  Test workspaceStoreStopResetsOperatorAvailabilityToIdle() passed after 0.031 seconds.
+􁁛  Test sessionMovesToDegradedStateWhenEventStreamGoesStale() passed after 0.044 seconds.
+􁁛  Test sessionRecoversFromDegradedStateWhenEventsResume() passed after 0.050 seconds.
+􁁛  Test sessionReconnectsAfterUnexpectedEventStreamEnd() passed after 0.053 seconds.
+􁁛  Test sessionMovesToFailedStateWhenEventStreamEndsUnexpectedly() passed after 0.053 seconds.
+􁁛  Test sessionFailsWhenReconnectAttemptsAreExhausted() passed after 0.053 seconds.
+􁁛  Test clientCanRestartReceiveLoopAfterTransportFailure() passed after 0.052 seconds.
+􁁛  Test workspaceStoreReflectsDiscoverySessionAndVariableUpdateStreams() passed after 0.063 seconds.
+􁁛  Test workspaceStoreSurfacesConnectionHealthAndOperatorAvailability() passed after 0.100 seconds.
+􁁛  Test run with 58 tests in 0 suites passed after 0.100 seconds.

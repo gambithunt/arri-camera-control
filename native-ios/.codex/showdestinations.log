@@ -1,0 +1,26 @@
+== xcodebuild -showdestinations ==
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project /Users/delon/Documents/code/projects/tonal/arri-camera-control/native-ios/ARRICameraControlApp.xcodeproj -scheme ARRICameraControlApp -showdestinations
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  ARRICameraControl: /Users/delon/Documents/code/projects/tonal/arri-camera-control/native-ios @ local
+
+
+
+	Available destinations for the "ARRICameraControlApp" scheme:
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, arch:arm64, id:5FEF8C31-A655-4681-816D-684BBDE2339F, OS:26.4, name:iPad (A16) }
+		{ platform:iOS Simulator, arch:arm64, id:C23FDFA9-8622-457A-BD0E-13AF05EC11F1, OS:26.4, name:iPad Air 11-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:A0F59179-B6D0-4621-B4A9-C8E25D70F8AB, OS:26.4, name:iPad Air 13-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:76F10567-BF76-4305-9A51-97ABC4FC9CFB, OS:26.4, name:iPad Pro 11-inch (M5) }
+		{ platform:iOS Simulator, arch:arm64, id:7FC346C1-B083-4207-801F-1E397B9E431E, OS:26.4, name:iPad Pro 13-inch (M5) }
+		{ platform:iOS Simulator, arch:arm64, id:0B37B51E-2DD4-4B99-BDB2-92BCBE2F9C86, OS:26.4, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:arm64, id:86DFC16E-19FD-430B-A63F-8F7DF7D069E7, OS:26.4, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:arm64, id:B5210951-2E08-488E-A652-7EB6DDDEF5B0, OS:26.4, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:arm64, id:CD996EAE-2685-4272-8F67-C4733F630C05, OS:26.4, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:arm64, id:56433429-46C9-4927-9ECE-97E197DBE64B, OS:26.4, name:iPhone 17e }
+		{ platform:iOS Simulator, arch:arm64, id:E0F30E61-F165-480A-9210-64D5FC03A337, OS:26.4, name:iPhone Air }

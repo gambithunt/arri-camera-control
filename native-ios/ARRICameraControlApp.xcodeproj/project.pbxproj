@@ -7,18 +7,25 @@
 		A10000010000000000000001 /* ARRICameraControlApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000001 /* ARRICameraControlApp.swift */; };
 		A10000010000000000000002 /* WorkspaceRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000002 /* WorkspaceRootView.swift */; };
 		A10000010000000000000003 /* WorkspaceEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000003 /* WorkspaceEnvironment.swift */; };
+		A10000010000000000000010 /* PhotoLibraryFrameGrabExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000010 /* PhotoLibraryFrameGrabExporter.swift */; };
+		A10000010000000000000012 /* WorkspaceSectionScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000012 /* WorkspaceSectionScreens.swift */; };
+		A10000010000000000000013 /* WorkspaceSupportViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000013 /* WorkspaceSupportViews.swift */; };
 		A10000010000000000000004 /* CameraFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000004 /* CameraFeatures */; };
 		A10000010000000000000005 /* CameraSession in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000005 /* CameraSession */; };
 		A10000010000000000000006 /* CameraDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000006 /* CameraDomain */; };
 		A10000010000000000000007 /* CameraDiscovery in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000007 /* CameraDiscovery */; };
 		A10000010000000000000008 /* ARRICAPKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000008 /* ARRICAPKit */; };
 		A10000010000000000000009 /* CameraDiagnostics in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000009 /* CameraDiagnostics */; };
+		A10000010000000000000011 /* CameraMocks in Frameworks */ = {isa = PBXBuildFile; productRef = A10000410000000000000010 /* CameraMocks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000110000000000000001 /* ARRICameraControlApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARRICameraControlApp.swift; sourceTree = "<group>"; };
 		A10000110000000000000002 /* WorkspaceRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceRootView.swift; sourceTree = "<group>"; };
 		A10000110000000000000003 /* WorkspaceEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceEnvironment.swift; sourceTree = "<group>"; };
+		A10000110000000000000010 /* PhotoLibraryFrameGrabExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryFrameGrabExporter.swift; sourceTree = "<group>"; };
+		A10000110000000000000012 /* WorkspaceSectionScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceSectionScreens.swift; sourceTree = "<group>"; };
+		A10000110000000000000013 /* WorkspaceSupportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceSupportViews.swift; sourceTree = "<group>"; };
 		A10000110000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000110000000000000005 /* ARRICameraControlApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ARRICameraControlApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -34,6 +41,7 @@
 				A10000010000000000000007 /* CameraDiscovery in Frameworks */,
 				A10000010000000000000008 /* ARRICAPKit in Frameworks */,
 				A10000010000000000000009 /* CameraDiagnostics in Frameworks */,
+				A10000010000000000000011 /* CameraMocks in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,6 +71,9 @@
 				A10000110000000000000001 /* ARRICameraControlApp.swift */,
 				A10000110000000000000002 /* WorkspaceRootView.swift */,
 				A10000110000000000000003 /* WorkspaceEnvironment.swift */,
+				A10000110000000000000010 /* PhotoLibraryFrameGrabExporter.swift */,
+				A10000110000000000000012 /* WorkspaceSectionScreens.swift */,
+				A10000110000000000000013 /* WorkspaceSupportViews.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -106,6 +117,7 @@
 				A10000410000000000000007 /* CameraDiscovery */,
 				A10000410000000000000008 /* ARRICAPKit */,
 				A10000410000000000000009 /* CameraDiagnostics */,
+				A10000410000000000000010 /* CameraMocks */,
 			);
 			productName = ARRICameraControlApp;
 			productReference = A10000110000000000000005 /* ARRICameraControlApp.app */;
@@ -167,6 +179,9 @@
 				A10000010000000000000001 /* ARRICameraControlApp.swift in Sources */,
 				A10000010000000000000002 /* WorkspaceRootView.swift in Sources */,
 				A10000010000000000000003 /* WorkspaceEnvironment.swift in Sources */,
+				A10000010000000000000010 /* PhotoLibraryFrameGrabExporter.swift in Sources */,
+				A10000010000000000000012 /* WorkspaceSectionScreens.swift in Sources */,
+				A10000010000000000000013 /* WorkspaceSupportViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,7 +201,7 @@
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -197,7 +212,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				INFOPLIST_FILE = App/ARRICameraControlApp/Supporting/Info.plist;
 				CODE_SIGN_STYLE = Automatic;
 			};
@@ -214,7 +229,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -225,7 +240,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				INFOPLIST_FILE = App/ARRICameraControlApp/Supporting/Info.plist;
 				CODE_SIGN_STYLE = Automatic;
 			};
@@ -242,7 +257,7 @@
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/ARRICameraControlApp/Supporting/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -251,7 +266,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -266,7 +281,7 @@
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/ARRICameraControlApp/Supporting/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -275,7 +290,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -339,6 +354,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A10000400000000000000001 /* XCLocalSwiftPackageReference "." */;
 			productName = CameraDiagnostics;
+		};
+		A10000410000000000000010 /* CameraMocks */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000400000000000000001 /* XCLocalSwiftPackageReference "." */;
+			productName = CameraMocks;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

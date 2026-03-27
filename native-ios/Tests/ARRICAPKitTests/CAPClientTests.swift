@@ -89,14 +89,43 @@ import Testing
     #expect(reply.messageID == 1)
 }
 
+@Test func clientCanRestartReceiveLoopAfterTransportFailure() async throws {
+    let transport = TestTransport()
+    let client = CAPClient(transport: transport)
+    let endpoint = CameraEndpoint(host: "10.0.0.11", port: 7777)
+
+    try await client.connect(to: endpoint)
+    await transport.failNextReceive(CAPNetworkTransportError.notConnected)
+    try await Task.sleep(for: .milliseconds(50))
+
+    await transport.enqueueIncomingFrame(
+        CAPFrame(
+            messageType: .reply,
+            messageID: 1,
+            commandCode: CAPResultCode.ok.rawValue,
+            payload: CAPDataCodec.encodeString("ARRI ALEXA 35")
+        )
+    )
+
+    try await client.connect(to: endpoint)
+    let reply = try await client.send(.getVariable(.cameraType))
+
+    #expect(await transport.connectCount == 2)
+    #expect(reply.messageID == 1)
+    #expect(try reply.decodeValue(for: .cameraType) == .string("ARRI ALEXA 35"))
+}
+
 private actor TestTransport: CAPTransport {
     private(set) var connectedEndpoint: CameraEndpoint?
+    private(set) var connectCount = 0
     private(set) var sentFrames: [CAPFrame] = []
     private var incomingFrames: [CAPFrame] = []
+    private var incomingErrors: [Error] = []
     private var waiters: [CheckedContinuation<CAPFrame, Error>] = []
 
     func connect(to endpoint: CameraEndpoint) async throws {
         connectedEndpoint = endpoint
+        connectCount += 1
     }
 
     func disconnect() async {
@@ -108,6 +137,10 @@ private actor TestTransport: CAPTransport {
     }
 
     func receive() async throws -> CAPFrame {
+        if !incomingErrors.isEmpty {
+            throw incomingErrors.removeFirst()
+        }
+
         if !incomingFrames.isEmpty {
             return incomingFrames.removeFirst()
         }
@@ -123,6 +156,15 @@ private actor TestTransport: CAPTransport {
             waiter.resume(returning: frame)
         } else {
             incomingFrames.append(frame)
+        }
+    }
+
+    func failNextReceive(_ error: Error) {
+        if let waiter = waiters.first {
+            waiters.removeFirst()
+            waiter.resume(throwing: error)
+        } else {
+            incomingErrors.append(error)
         }
     }
 }

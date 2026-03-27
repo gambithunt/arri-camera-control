@@ -85,6 +85,10 @@ public actor CAPClient: CAPClientProtocol {
         }
 
         receiveLoop = Task {
+            defer {
+                receiveLoop = nil
+            }
+
             while !Task.isCancelled {
                 do {
                     let frame = try await transport.receive()

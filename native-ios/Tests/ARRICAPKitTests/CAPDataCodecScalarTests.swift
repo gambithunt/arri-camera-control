@@ -16,6 +16,13 @@ import Testing
     #expect(decoded == 0x12345678)
 }
 
+@Test func int32RoundTripsThroughCodec() throws {
+    let encoded = CAPDataCodec.encodeInt32(-35_000)
+    let decoded = try CAPDataCodec.decodeInt32(encoded)
+
+    #expect(decoded == -35_000)
+}
+
 @Test func float32RoundTripsThroughCodec() throws {
     let encoded = CAPDataCodec.encodeFloat32(24.0)
     let decoded = try CAPDataCodec.decodeFloat32(encoded)
@@ -30,5 +37,9 @@ import Testing
 
     #expect(throws: CAPDataCodecError.invalidScalarLength(expected: 4, actual: 2)) {
         try CAPDataCodec.decodeUInt32(Data([0x01, 0x02]))
+    }
+
+    #expect(throws: CAPDataCodecError.invalidScalarLength(expected: 4, actual: 1)) {
+        try CAPDataCodec.decodeInt32(Data([0x01]))
     }
 }

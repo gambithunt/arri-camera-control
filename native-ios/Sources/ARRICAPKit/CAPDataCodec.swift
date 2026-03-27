@@ -7,6 +7,18 @@ public enum CAPDataCodecError: Error, Equatable, Sendable {
 }
 
 public enum CAPDataCodec {
+    public static func encodeUInt8(_ value: UInt8) -> Data {
+        Data([value])
+    }
+
+    public static func decodeUInt8(_ data: Data) throws -> UInt8 {
+        guard data.count == 1 else {
+            throw CAPDataCodecError.invalidScalarLength(expected: 1, actual: data.count)
+        }
+
+        return data[0]
+    }
+
     public static func encodeUInt16(_ value: UInt16) -> Data {
         Data([UInt8(value >> 8), UInt8(value & 0xFF)])
     }
@@ -37,6 +49,14 @@ public enum CAPDataCodec {
             | UInt32(data[1]) << 16
             | UInt32(data[2]) << 8
             | UInt32(data[3])
+    }
+
+    public static func encodeInt32(_ value: Int32) -> Data {
+        encodeUInt32(UInt32(bitPattern: value))
+    }
+
+    public static func decodeInt32(_ data: Data) throws -> Int32 {
+        Int32(bitPattern: try decodeUInt32(data))
     }
 
     public static func encodeFloat32(_ value: Float) -> Data {

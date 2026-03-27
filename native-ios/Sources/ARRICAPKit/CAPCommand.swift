@@ -19,6 +19,9 @@ public enum CAPCommandCode: UInt16, Sendable {
     case playbackExit = 0x00A9
     case playbackStart = 0x00AA
     case playbackPause = 0x00AB
+    case buttonPress = 0x00F8
+    case buttonRelease = 0x00F9
+    case buttonAssign = 0x0100
 }
 
 public enum CAPCommand: Equatable, Sendable {
@@ -31,12 +34,15 @@ public enum CAPCommand: Equatable, Sendable {
     case getVariable(CAPVariableIdentifier)
     case setVariable(CAPVariableIdentifier, CAPVariableValue)
     case getFrameGrab
+    case getClipList
     case recordStart
     case recordStop
     case playbackEnter
     case playbackExit
     case playbackStart
     case playbackPause
+    case buttonPress(String)
+    case buttonRelease(String)
 
     public func makeFrame(messageID: UInt16) throws -> CAPFrame {
         switch self {
@@ -88,6 +94,8 @@ public enum CAPCommand: Equatable, Sendable {
             )
         case .getFrameGrab:
             return CAPFrame(messageType: .command, messageID: messageID, commandCode: CAPCommandCode.getFrameGrab.rawValue)
+        case .getClipList:
+            return CAPFrame(messageType: .command, messageID: messageID, commandCode: CAPCommandCode.getClipList.rawValue)
         case .recordStart:
             return CAPFrame(messageType: .command, messageID: messageID, commandCode: CAPCommandCode.recordStart.rawValue)
         case .recordStop:
@@ -100,6 +108,20 @@ public enum CAPCommand: Equatable, Sendable {
             return CAPFrame(messageType: .command, messageID: messageID, commandCode: CAPCommandCode.playbackStart.rawValue)
         case .playbackPause:
             return CAPFrame(messageType: .command, messageID: messageID, commandCode: CAPCommandCode.playbackPause.rawValue)
+        case let .buttonPress(name):
+            return CAPFrame(
+                messageType: .command,
+                messageID: messageID,
+                commandCode: CAPCommandCode.buttonPress.rawValue,
+                payload: CAPDataCodec.encodeString(name)
+            )
+        case let .buttonRelease(name):
+            return CAPFrame(
+                messageType: .command,
+                messageID: messageID,
+                commandCode: CAPCommandCode.buttonRelease.rawValue,
+                payload: CAPDataCodec.encodeString(name)
+            )
         }
     }
 }

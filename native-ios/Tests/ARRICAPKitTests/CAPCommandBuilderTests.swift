@@ -41,3 +41,17 @@ import Testing
     #expect(frame.commandCode == CAPCommandCode.recordStart.rawValue)
     #expect(frame.payload.isEmpty)
 }
+
+@Test func getClipListCommandUsesExpectedCodeWithoutPayload() throws {
+    let frame = try CAPCommand.getClipList.makeFrame(messageID: 14)
+
+    #expect(frame.commandCode == CAPCommandCode.getClipList.rawValue)
+    #expect(frame.payload.isEmpty)
+}
+
+@Test func buttonPressCommandEncodesButtonNameAsStringPayload() throws {
+    let frame = try CAPCommand.buttonPress("MON_1").makeFrame(messageID: 15)
+
+    #expect(frame.commandCode == CAPCommandCode.buttonPress.rawValue)
+    #expect(try CAPDataCodec.decodeString(frame.payload) == "MON_1")
+}
